@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "condition",
+    "name": "policy_expired"
+  },
+  "context": {
+    "documentation": "The policy end date is in the past."
+  },
+  "output_type": "title",
+  "max_chars": 30,
+  "style": "neutral",
+  "language": "es"
+}

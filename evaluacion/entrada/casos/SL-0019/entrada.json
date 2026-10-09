@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "serialize_json"
+  },
+  "context": {
+    "documentation": "Serializes a mapping to compact JSON text."
+  },
+  "output_type": "title",
+  "max_chars": 39,
+  "style": "neutral",
+  "language": "es"
+}

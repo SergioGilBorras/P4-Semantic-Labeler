@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "check_signature"
+  },
+  "context": {
+    "documentation": "Checks signature syntax only, not cryptographic authenticity."
+  },
+  "output_type": "summary",
+  "max_chars": 120,
+  "style": "neutral",
+  "language": "es"
+}

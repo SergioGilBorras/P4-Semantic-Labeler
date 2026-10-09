@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "condition",
+    "name": "read_only_mode"
+  },
+  "context": {
+    "documentation": "Forbids changes to persistent content while enabled."
+  },
+  "output_type": "title",
+  "max_chars": 32,
+  "style": "neutral",
+  "language": "es"
+}

@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "normalize_unicode"
+  },
+  "context": {
+    "documentation": "Converts strings into Unicode normalization form NFC."
+  },
+  "output_type": "title",
+  "max_chars": 40,
+  "style": "neutral",
+  "language": "es"
+}

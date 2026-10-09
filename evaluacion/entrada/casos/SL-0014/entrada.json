@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "convert_temperature"
+  },
+  "context": {
+    "documentation": "Converts Celsius temperatures to Fahrenheit."
+  },
+  "output_type": "title",
+  "max_chars": 45,
+  "style": "neutral",
+  "language": "es"
+}

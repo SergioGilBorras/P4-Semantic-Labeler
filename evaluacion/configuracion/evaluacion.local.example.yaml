@@ -1,0 +1,11 @@
+# Copy to evaluacion.local.yaml (ignored by Git).
+schema_version: 1
+provider: mock  # mock or codex (real opt-in)
+selection: piloto
+repetitions: 1
+max_cases: 60
+max_calls: 60
+timeout_seconds: 120
+real_inference_default: false
+audit: manual
+external_submission: false

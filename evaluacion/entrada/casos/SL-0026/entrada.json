@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "rotate_logs"
+  },
+  "context": {
+    "documentation": "Rotates local logs when file size exceeds a threshold."
+  },
+  "output_type": "title",
+  "max_chars": 33,
+  "style": "neutral",
+  "language": "en"
+}

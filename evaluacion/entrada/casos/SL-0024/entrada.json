@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "flatten_tree"
+  },
+  "context": {
+    "documentation": "Converts nested nodes into an ordered flat sequence."
+  },
+  "output_type": "title",
+  "max_chars": 33,
+  "style": "neutral",
+  "language": "en"
+}

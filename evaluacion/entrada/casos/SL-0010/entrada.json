@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "draft_report"
+  },
+  "context": {
+    "documentation": "Produces an unapproved draft report from supplied measurements."
+  },
+  "output_type": "summary",
+  "max_chars": 90,
+  "style": "neutral",
+  "language": "es"
+}

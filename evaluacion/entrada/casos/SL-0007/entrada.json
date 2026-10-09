@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "parse_customer_csv"
+  },
+  "context": {
+    "documentation": "Parses CSV rows and validates mandatory fields."
+  },
+  "output_type": "title",
+  "max_chars": 44,
+  "style": "neutral",
+  "language": "es"
+}

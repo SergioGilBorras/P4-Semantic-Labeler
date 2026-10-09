@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "condition",
+    "name": "resource_limit"
+  },
+  "context": {
+    "documentation": "The maximum allowed number of concurrent sessions has been reached."
+  },
+  "output_type": "title",
+  "max_chars": 35,
+  "style": "neutral",
+  "language": "es"
+}

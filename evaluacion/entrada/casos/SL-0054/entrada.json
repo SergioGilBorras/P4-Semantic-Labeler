@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "concept",
+    "name": "bad_limit"
+  },
+  "context": {
+    "documentation": "A zero max_chars value is invalid input."
+  },
+  "output_type": "title",
+  "max_chars": 0,
+  "style": "neutral",
+  "language": "en"
+}

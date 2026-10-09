@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "concept",
+    "name": "transliterate_café"
+  },
+  "context": {
+    "documentation": "Removes Latin accents without translating meaning."
+  },
+  "output_type": "title",
+  "max_chars": 40,
+  "style": "neutral",
+  "language": "es"
+}

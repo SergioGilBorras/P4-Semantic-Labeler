@@ -9,3 +9,6 @@ __pycache__/
 dist/
 build/
 .serena/
+evaluacion/salida/
+evaluacion/tmp/
+evaluacion/configuracion/*.local.yaml

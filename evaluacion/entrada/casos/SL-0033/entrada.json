@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "event",
+    "name": "threshold_alert"
+  },
+  "context": {
+    "documentation": "Triggers an alert if the measured value exceeds the configured threshold."
+  },
+  "output_type": "title",
+  "max_chars": 42,
+  "style": "neutral",
+  "language": "en"
+}

@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "document",
+    "name": "identity_matrix"
+  },
+  "context": {
+    "documentation": "Explains a mathematical identity matrix and eigenvectors; does not implement an algorithm."
+  },
+  "output_type": "summary",
+  "max_chars": 130,
+  "style": "academic",
+  "language": "es"
+}

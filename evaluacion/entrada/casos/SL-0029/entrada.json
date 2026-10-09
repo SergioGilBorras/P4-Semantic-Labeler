@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "create_snapshot"
+  },
+  "context": {
+    "documentation": "Creates a point-in-time copy of a dataset."
+  },
+  "output_type": "title",
+  "max_chars": 32,
+  "style": "neutral",
+  "language": "es"
+}

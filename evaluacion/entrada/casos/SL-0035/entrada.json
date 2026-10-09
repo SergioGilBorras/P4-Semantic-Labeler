@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "sanitize_filename"
+  },
+  "context": {
+    "documentation": "Removes unsafe path separators from an untrusted filename."
+  },
+  "output_type": "title",
+  "max_chars": 50,
+  "style": "neutral",
+  "language": "es"
+}

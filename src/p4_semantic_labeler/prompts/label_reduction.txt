@@ -1,0 +1,1 @@
+Shorten the previous candidate without changing its supported meaning.

@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "condition",
+    "name": "invoice_overdue"
+  },
+  "context": {
+    "documentation": "An unpaid invoice has passed its due date."
+  },
+  "output_type": "title",
+  "max_chars": 37,
+  "style": "neutral",
+  "language": "es"
+}

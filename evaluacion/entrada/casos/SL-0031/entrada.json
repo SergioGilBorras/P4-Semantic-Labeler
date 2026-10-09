@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "synchronize_notes"
+  },
+  "context": {
+    "documentation": "Synchronizes note titles but not note bodies."
+  },
+  "output_type": "summary",
+  "max_chars": 96,
+  "style": "neutral",
+  "language": "es"
+}

@@ -114,8 +114,8 @@ All settings are environment variables. Defaults are intended for local use.
 
 | Variable | Default | Meaning |
 |---|---:|---|
-| `P4_LABELER_PROVIDER` | `disabled` | `disabled`, `mock`, or `codex` (P4-Codex-Bridge 1.x) |
-| `P4_LABELER_CODEX_WORKSPACE` | temporary directory | Existing absolute Codex working directory, if explicitly configured |
+| `P4_LABELER_PROVIDER` | `disabled` | `disabled`, `mock`, or `codex` (requires optional P4-Codex-Bridge 1.1.0 or later; see [Codex setup](docs/codex.md)) |
+| `P4_LABELER_CODEX_WORKSPACE` | managed temporary workspace | Existing absolute Codex working directory, if explicitly configured |
 | `P4_LABELER_MIN_CHARS` | `1` | Min length requested |
 | `P4_LABELER_MAX_CHARS` | `300` | Max length requested |
 | `P4_LABELER_MAX_REQUEST_BYTES` | `1048576` | HTTP request body cap |

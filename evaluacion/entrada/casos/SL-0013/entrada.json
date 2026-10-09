@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "condition",
+    "name": "unresolved_dependency"
+  },
+  "context": {
+    "documentation": "A dependency remains unresolved and prevents startup."
+  },
+  "output_type": "title",
+  "max_chars": 45,
+  "style": "neutral",
+  "language": "en"
+}

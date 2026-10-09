@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "prepare_release_notes"
+  },
+  "context": {
+    "documentation": "Builds a release note draft from merged changes."
+  },
+  "output_type": "title",
+  "max_chars": 50,
+  "style": "neutral",
+  "language": "es"
+}

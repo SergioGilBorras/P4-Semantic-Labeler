@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "record_timeout"
+  },
+  "context": {
+    "documentation": "Records a timeout event without automatic retries."
+  },
+  "output_type": "summary",
+  "max_chars": 92,
+  "style": "neutral",
+  "language": "es"
+}

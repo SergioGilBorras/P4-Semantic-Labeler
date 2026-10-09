@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "estimate_travel_duration"
+  },
+  "context": {
+    "documentation": "Estimates travel duration using supplied segments, not live traffic."
+  },
+  "output_type": "summary",
+  "max_chars": 110,
+  "style": "neutral",
+  "language": "es"
+}

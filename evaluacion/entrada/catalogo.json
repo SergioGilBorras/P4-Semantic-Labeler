@@ -1,0 +1,726 @@
+{
+  "version": "1.0",
+  "status": "known_to_authors_not_blind",
+  "cases": [
+    {
+      "id": "SL-0001",
+      "version": "1.0",
+      "purpose": "Evaluate function: process_pending_orders",
+      "task_type": "title",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0002",
+      "version": "1.0",
+      "purpose": "Evaluate condition: cache_invalid",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "condition"
+    },
+    {
+      "id": "SL-0003",
+      "version": "1.0",
+      "purpose": "Evaluate document: ProjectArchitecture",
+      "task_type": "summary",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "document"
+    },
+    {
+      "id": "SL-0004",
+      "version": "1.0",
+      "purpose": "Evaluate function: retry_failed_jobs",
+      "task_type": "title",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0005",
+      "version": "1.0",
+      "purpose": "Evaluate condition: is_not_authorized",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "condition"
+    },
+    {
+      "id": "SL-0006",
+      "version": "1.0",
+      "purpose": "Evaluate function: archive_old_records",
+      "task_type": "summary",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0007",
+      "version": "1.0",
+      "purpose": "Evaluate function: parse_customer_csv",
+      "task_type": "title",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0008",
+      "version": "1.0",
+      "purpose": "Evaluate function: calculate_median",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0009",
+      "version": "1.0",
+      "purpose": "Evaluate event: payment_declined",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "event"
+    },
+    {
+      "id": "SL-0010",
+      "version": "1.0",
+      "purpose": "Evaluate function: draft_report",
+      "task_type": "summary",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0011",
+      "version": "1.0",
+      "purpose": "Evaluate function: fetch_pages",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0012",
+      "version": "1.0",
+      "purpose": "Evaluate document: identity_matrix",
+      "task_type": "summary",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "document"
+    },
+    {
+      "id": "SL-0013",
+      "version": "1.0",
+      "purpose": "Evaluate condition: unresolved_dependency",
+      "task_type": "title",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "condition"
+    },
+    {
+      "id": "SL-0014",
+      "version": "1.0",
+      "purpose": "Evaluate function: convert_temperature",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0015",
+      "version": "1.0",
+      "purpose": "Evaluate function: remove_duplicates",
+      "task_type": "summary",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0016",
+      "version": "1.0",
+      "purpose": "Evaluate function: update_index",
+      "task_type": "title",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0017",
+      "version": "1.0",
+      "purpose": "Evaluate condition: policy_expired",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "condition"
+    },
+    {
+      "id": "SL-0018",
+      "version": "1.0",
+      "purpose": "Evaluate function: download_attachment",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0019",
+      "version": "1.0",
+      "purpose": "Evaluate function: serialize_json",
+      "task_type": "title",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0020",
+      "version": "1.0",
+      "purpose": "Evaluate function: estimate_travel_duration",
+      "task_type": "summary",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0021",
+      "version": "1.0",
+      "purpose": "Evaluate condition: read_only_mode",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "condition"
+    },
+    {
+      "id": "SL-0022",
+      "version": "1.0",
+      "purpose": "Evaluate function: sleep_until_ready",
+      "task_type": "title",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0023",
+      "version": "1.0",
+      "purpose": "Evaluate document: financial_statement",
+      "task_type": "summary",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "document"
+    },
+    {
+      "id": "SL-0024",
+      "version": "1.0",
+      "purpose": "Evaluate function: flatten_tree",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0025",
+      "version": "1.0",
+      "purpose": "Evaluate condition: no_items_found",
+      "task_type": "title",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "condition"
+    },
+    {
+      "id": "SL-0026",
+      "version": "1.0",
+      "purpose": "Evaluate function: rotate_logs",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0027",
+      "version": "1.0",
+      "purpose": "Evaluate function: merge_config",
+      "task_type": "summary",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0028",
+      "version": "1.0",
+      "purpose": "Evaluate function: notify_admins",
+      "task_type": "title",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0029",
+      "version": "1.0",
+      "purpose": "Evaluate function: create_snapshot",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0030",
+      "version": "1.0",
+      "purpose": "Evaluate condition: schema_mismatch",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "condition"
+    },
+    {
+      "id": "SL-0031",
+      "version": "1.0",
+      "purpose": "Evaluate function: synchronize_notes",
+      "task_type": "summary",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0032",
+      "version": "1.0",
+      "purpose": "Evaluate condition: resource_limit",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "condition"
+    },
+    {
+      "id": "SL-0033",
+      "version": "1.0",
+      "purpose": "Evaluate event: threshold_alert",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "event"
+    },
+    {
+      "id": "SL-0034",
+      "version": "1.0",
+      "purpose": "Evaluate function: parse_header",
+      "task_type": "summary",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0035",
+      "version": "1.0",
+      "purpose": "Evaluate function: sanitize_filename",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0036",
+      "version": "1.0",
+      "purpose": "Evaluate function: check_signature",
+      "task_type": "summary",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "calibracion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0037",
+      "version": "1.0",
+      "purpose": "Evaluate condition: invoice_overdue",
+      "task_type": "title",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "regresion",
+      "category": "condition"
+    },
+    {
+      "id": "SL-0038",
+      "version": "1.0",
+      "purpose": "Evaluate function: restore_backup",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "regresion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0039",
+      "version": "1.0",
+      "purpose": "Evaluate function: mark_unread",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "regresion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0040",
+      "version": "1.0",
+      "purpose": "Evaluate function: summarize_findings",
+      "task_type": "summary",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "regresion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0041",
+      "version": "1.0",
+      "purpose": "Evaluate function: prepare_release_notes",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "regresion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0042",
+      "version": "1.0",
+      "purpose": "Evaluate concept: token_expiry",
+      "task_type": "summary",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "regresion",
+      "category": "concept"
+    },
+    {
+      "id": "SL-0043",
+      "version": "1.0",
+      "purpose": "Evaluate condition: is_cache_warm",
+      "task_type": "title",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "regresion",
+      "category": "condition"
+    },
+    {
+      "id": "SL-0044",
+      "version": "1.0",
+      "purpose": "Evaluate function: generate_manifest",
+      "task_type": "summary",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "regresion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0045",
+      "version": "1.0",
+      "purpose": "Evaluate function: normalize_unicode",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "regresion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0046",
+      "version": "1.0",
+      "purpose": "Evaluate function: check_readiness",
+      "task_type": "summary",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "regresion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0047",
+      "version": "1.0",
+      "purpose": "Evaluate event: permission_denied",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "regresion",
+      "category": "event"
+    },
+    {
+      "id": "SL-0048",
+      "version": "1.0",
+      "purpose": "Evaluate function: roll_forward",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "regresion",
+      "category": "function"
+    },
+    {
+      "id": "SL-0049",
+      "version": "1.0",
+      "purpose": "Evaluate function: record_timeout",
+      "task_type": "summary",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "reserva",
+      "category": "function"
+    },
+    {
+      "id": "SL-0050",
+      "version": "1.0",
+      "purpose": "Evaluate document: document_index",
+      "task_type": "summary",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "reserva",
+      "category": "document"
+    },
+    {
+      "id": "SL-0051",
+      "version": "1.0",
+      "purpose": "Evaluate boundary: max_chars_tiny",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "reserva",
+      "category": "boundary"
+    },
+    {
+      "id": "SL-0052",
+      "version": "1.0",
+      "purpose": "Evaluate unicode: emoji_status",
+      "task_type": "title",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "reserva",
+      "category": "unicode"
+    },
+    {
+      "id": "SL-0053",
+      "version": "1.0",
+      "purpose": "Evaluate invalid: empty_subject",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "input_validation"
+      ],
+      "cohort": "reserva",
+      "category": "invalid"
+    },
+    {
+      "id": "SL-0054",
+      "version": "1.0",
+      "purpose": "Evaluate invalid: bad_limit",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "input_validation"
+      ],
+      "cohort": "reserva",
+      "category": "invalid"
+    },
+    {
+      "id": "SL-0055",
+      "version": "1.0",
+      "purpose": "Evaluate adversarial: adversarial_note",
+      "task_type": "title",
+      "complexity": "high",
+      "risk": [
+        "prompt_injection"
+      ],
+      "cohort": "reserva",
+      "category": "adversarial"
+    },
+    {
+      "id": "SL-0056",
+      "version": "1.0",
+      "purpose": "Evaluate ambiguous: conflicting_records",
+      "task_type": "summary",
+      "complexity": "high",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "reserva",
+      "category": "ambiguous"
+    },
+    {
+      "id": "SL-0057",
+      "version": "1.0",
+      "purpose": "Evaluate ambiguous: unknown_operation",
+      "task_type": "title",
+      "complexity": "high",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "reserva",
+      "category": "ambiguous"
+    },
+    {
+      "id": "SL-0058",
+      "version": "1.0",
+      "purpose": "Evaluate function: concurrent_queue",
+      "task_type": "summary",
+      "complexity": "medium",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "reserva",
+      "category": "function"
+    },
+    {
+      "id": "SL-0059",
+      "version": "1.0",
+      "purpose": "Evaluate unicode: transliterate_café",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "reserva",
+      "category": "unicode"
+    },
+    {
+      "id": "SL-0060",
+      "version": "1.0",
+      "purpose": "Evaluate condition: reject_unsigned_payload",
+      "task_type": "summary",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity"
+      ],
+      "cohort": "reserva",
+      "category": "condition"
+    }
+  ]
+}

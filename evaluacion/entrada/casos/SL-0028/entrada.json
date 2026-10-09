@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "notify_admins"
+  },
+  "context": {
+    "documentation": "Alerts configured administrators when the queue fills."
+  },
+  "output_type": "title",
+  "max_chars": 50,
+  "style": "neutral",
+  "language": "es"
+}

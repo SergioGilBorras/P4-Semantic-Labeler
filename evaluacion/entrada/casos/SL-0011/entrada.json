@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "fetch_pages"
+  },
+  "context": {
+    "documentation": "Retrieves successive pages until the pagination cursor disappears."
+  },
+  "output_type": "title",
+  "max_chars": 40,
+  "style": "neutral",
+  "language": "en"
+}

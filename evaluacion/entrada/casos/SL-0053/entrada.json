@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "concept",
+    "name": ""
+  },
+  "context": {
+    "documentation": "Empty subject is invalid input."
+  },
+  "output_type": "title",
+  "max_chars": 25,
+  "style": "neutral",
+  "language": "es"
+}

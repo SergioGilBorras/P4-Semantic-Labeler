@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "roll_forward"
+  },
+  "context": {
+    "documentation": "Applies the next database migration without rolling back."
+  },
+  "output_type": "title",
+  "max_chars": 45,
+  "style": "neutral",
+  "language": "en"
+}
