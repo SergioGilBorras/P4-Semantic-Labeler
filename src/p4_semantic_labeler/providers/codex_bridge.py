@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import asyncio
 import importlib
+import inspect
+import re
 import threading
 from pathlib import Path
 from typing import Any
@@ -39,6 +41,7 @@ from p4_semantic_labeler.providers.base import ProviderPrompt, ProviderResponse
 
 class CodexBridgeProvider:
     name = "codex"
+    MINIMUM_BRIDGE_VERSION = (1, 1, 0)
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -161,11 +164,42 @@ class CodexBridgeProvider:
             assert self._workspace is not None
             return self._bridge, self._workspace
 
+    @classmethod
+    def _bridge_supports_managed_workspace(cls, module: Any) -> bool:
+        version = getattr(module, "__version__", None)
+        if not isinstance(version, str):
+            return False
+        match = re.match(
+            r"^(\d+)\.(\d+)\.(\d+)(?:(a|b|rc)(\d+))?(?:\.post(\d+))?(?:\+[-a-zA-Z0-9.]+)?$",
+            version,
+        )
+        if match is None:
+            return False
+        installed = tuple(int(part) for part in match.group(1, 2, 3))
+        prerelease = match.group(4) is not None
+        if installed < cls.MINIMUM_BRIDGE_VERSION or (
+            installed == cls.MINIMUM_BRIDGE_VERSION and prerelease
+        ):
+            return False
+        try:
+            parameters = inspect.signature(module.CodexBridge.run).parameters
+        except (AttributeError, TypeError, ValueError):
+            return False
+        return "skip_git_repo_check" in parameters
+
     def _generate_sync(self, prompt: ProviderPrompt) -> ProviderResponse:
         try:
             module = importlib.import_module("p4_codex_bridge")
         except ImportError as exc:
             raise self._annotate_error(ProviderUnavailable, UNKNOWN) from exc
+
+        if not self._bridge_supports_managed_workspace(module):
+            raise self._annotate_error(
+                ProviderUnavailable,
+                CAPABILITY_UNAVAILABLE,
+            ) from None
+
+        skip_git_repo_check = self.settings.codex_workspace is None
 
         try:
             bridge, workspace = self._get_bridge(module)
@@ -198,6 +232,7 @@ class CodexBridgeProvider:
                 config_policy="isolated",
                 capture_last_message=True,
                 security_policy=policy,
+                skip_git_repo_check=skip_git_repo_check,
             )
         except Exception as exc:
             public_error, category = self._exception_diagnostic(

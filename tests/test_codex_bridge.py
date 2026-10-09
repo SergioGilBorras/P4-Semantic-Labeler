@@ -1,10 +1,11 @@
-"""Contract tests: exercise the confirmed P4-Codex-Bridge 1.0 public surface.
+"""Contract tests: exercise the confirmed P4-Codex-Bridge 1.1 public surface.
 
 These use a facade double so CI never invokes paid/external Codex inference.
 """
 from __future__ import annotations
 
 import builtins
+import inspect
 import types
 from pathlib import Path
 from types import SimpleNamespace
@@ -36,6 +37,7 @@ from p4_semantic_labeler.temp_directories import TemporaryDirectoryError
 @pytest.fixture
 def fake_bridge(monkeypatch):
     module = types.ModuleType("p4_codex_bridge")
+    module.__version__ = "1.1.0"
     module.SandboxMode = SimpleNamespace(READ_ONLY="read-only")
     module.ApprovalPolicy = SimpleNamespace(NEVER="never")
     module.ProjectTrust = SimpleNamespace(TRUSTED="TRUSTED")
@@ -55,7 +57,8 @@ def fake_bridge(monkeypatch):
         def __init__(self, *, state_dir, allowed_roots):
             calls.append(("constructor", Path(state_dir), allowed_roots))
 
-        def run(self, prompt, **kwargs):
+        def run(self, prompt, *, skip_git_repo_check=False, **kwargs):
+            kwargs["skip_git_repo_check"] = skip_git_repo_check
             calls.append(("run", prompt, kwargs))
             if isinstance(response.error, BaseException):
                 raise response.error
@@ -87,12 +90,14 @@ async def test_codex_frozen_public_interface_with_accepted_mcp_risk(fake_bridge)
     assert workspace.name == "workspace"
     assert workspace.parent == state_dir.parent
     assert workspace != state_dir
+    assert not (workspace / ".git").exists()
     _, prompt, kwargs = calls[1]
     assert '"documentation"' in prompt
     assert "Validate pending orders" in prompt
     assert kwargs["profile"] == "analysis"
     assert kwargs["config_policy"] == "isolated"
     assert kwargs["capture_last_message"] is True
+    assert kwargs["skip_git_repo_check"] is True
     assert kwargs["permissions"].sandbox == "read-only"
     assert kwargs["permissions"].approval_policy == "never"
     policy = kwargs["security_policy"]
@@ -143,6 +148,7 @@ async def test_codex_uses_configured_existing_workspace(fake_bridge, tmp_path):
     assert calls[0][1].name == "bridge-state"
     assert calls[0][1].is_dir()
     assert tmp_path not in calls[0][1].parents
+    assert calls[1][2]["skip_git_repo_check"] is False
 
 
 @pytest.mark.asyncio
@@ -315,3 +321,48 @@ async def test_temp_bridge_state_permission_diagnostic_has_no_bridge_attempt(
         "provider_responses_received": 0,
         "inferences_confirmed": 0,
     }
+
+
+@pytest.mark.asyncio
+async def test_old_bridge_version_is_rejected_as_capability_unavailable(fake_bridge):
+    calls, _, module = fake_bridge
+    module.__version__ = "1.0.0"
+    labeler = Labeler(settings=Settings(provider="codex"))
+
+    with pytest.raises(ProviderUnavailable) as raised:
+        await labeler.agenerate(LabelRequest(subject=Subject(name="example")))
+
+    assert raised.value.diagnostic_category == CAPABILITY_UNAVAILABLE
+    assert "1.0.0" not in str(raised.value)
+    assert calls == []
+    assert labeler.provider.telemetry_snapshot() == {
+        "bridge_calls_attempted": 0,
+        "bridge_results_received": 0,
+        "provider_responses_received": 0,
+        "inferences_confirmed": 0,
+    }
+
+
+def test_installed_bridge_api_supports_skip_git_repo_check():
+    bridge = pytest.importorskip("p4_codex_bridge")
+    assert codex_bridge_provider.CodexBridgeProvider._bridge_supports_managed_workspace(bridge)
+    assert "skip_git_repo_check" in inspect.signature(bridge.CodexBridge.run).parameters
+
+
+@pytest.mark.asyncio
+async def test_mock_provider_does_not_import_codex_bridge(monkeypatch):
+    original_import = builtins.__import__
+
+    def guarded_import(name, *args, **kwargs):
+        if name == "p4_codex_bridge":
+            raise AssertionError("mock provider attempted to import Codex Bridge")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(
+        codex_bridge_provider.importlib, "import_module", guarded_import
+    )
+    result = await Labeler(settings=Settings(provider="mock")).agenerate(
+        LabelRequest(subject=Subject(name="pending_orders"))
+    )
+
+    assert result.provider == "mock"
