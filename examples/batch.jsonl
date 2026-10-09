@@ -1,0 +1,2 @@
+{"subject":{"kind":"function","name":"process_pending_orders"},"context":{"documentation":"Validate orders and prepare dispatch."},"output_type":"title","max_chars":45,"style":"formal","language":"es"}
+{"subject":{"kind":"document","name":"ProjectArchitecture"},"context":{"text":"This document describes application components, interfaces and data flows."},"output_type":"summary","max_chars":160,"style":"academic","language":"en"}

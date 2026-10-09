@@ -1,0 +1,8 @@
+{
+  "subject": {"kind": "function", "name": "process_pending_orders"},
+  "context": {"documentation": "Validates orders and prepares them for dispatch."},
+  "output_type": "title",
+  "max_chars": 45,
+  "style": "formal",
+  "language": "es"
+}
