@@ -6,7 +6,7 @@ import asyncio
 import secrets
 import time
 from collections import defaultdict, deque
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, File, Form, Header, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
@@ -145,7 +145,7 @@ def create_app(labeler: Labeler | None = None, settings: Settings | None = None)
 
     @app.post("/v1/labels/file", response_model=LabelResult, dependencies=[Depends(require_key)])
     async def label_file(
-        file: UploadFile = File(...),
+        file: Annotated[UploadFile, File()],
         name: str = Form(...),
         kind: str = Form("document"),
         output_type: str = Form("summary"),
