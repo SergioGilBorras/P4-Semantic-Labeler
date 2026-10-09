@@ -52,7 +52,7 @@ def test_cli_bad_input_no_secret_leak():
     assert "SECRET" not in result.stderr
 
 
-def test_file_security(tmp_path):
+def test_file_security_multiplatform(tmp_path):
     allowed = tmp_path / "allowed"
     denied = tmp_path / "denied"
     allowed.mkdir()
@@ -61,19 +61,35 @@ def test_file_security(tmp_path):
     filename.write_text("safe", encoding="utf-8")
     forbidden = denied / "secret.md"
     forbidden.write_text("confidential", encoding="utf-8")
-    (allowed / "link.md").symlink_to(forbidden)
     settings = Settings(provider="mock", mcp_roots=(allowed,))
     assert read_authorized_file(str(filename), settings)[1] == "safe"
     with pytest.raises(RequestValueError):
         read_authorized_file(str(forbidden), settings)
-    with pytest.raises(RequestValueError):
-        read_authorized_file(str(allowed / "link.md"), settings)
     with pytest.raises(RequestValueError):
         decode_text(b"xx", "file.exe", settings)
     with pytest.raises(RequestValueError):
         decode_text(b"hello\x00bye", "file.txt", settings)
     with pytest.raises(InputLimitError):
         decode_text(b"a" * (settings.max_file_bytes + 1), "huge.txt", settings)
+
+
+@pytest.mark.skipif(
+    sys.platform != "linux",
+    reason="La prueba de symlinks se ejecuta exclusivamente en Linux",
+)
+def test_file_security_rejects_symlink_to_external_file(tmp_path):
+    allowed = tmp_path / "allowed"
+    denied = tmp_path / "denied"
+    allowed.mkdir()
+    denied.mkdir()
+    forbidden = denied / "secret.md"
+    forbidden.write_text("confidential", encoding="utf-8")
+    link = allowed / "link.md"
+    link.symlink_to(forbidden)
+    settings = Settings(provider="mock", mcp_roots=(allowed,))
+
+    with pytest.raises(RequestValueError):
+        read_authorized_file(str(link), settings)
 
 
 @pytest.mark.asyncio

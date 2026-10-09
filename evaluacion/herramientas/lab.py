@@ -14,6 +14,13 @@ from pathlib import Path
 
 import yaml
 
+from p4_semantic_labeler.providers.codex_diagnostics import (
+    DIAGNOSTIC_CATEGORIES,
+    STRUCTURED_ERROR_CATEGORIES,
+    UNKNOWN,
+    category_for_structured_code,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 INPUT = ROOT / "entrada"
 OUTPUT = ROOT / "salida"
@@ -147,8 +154,43 @@ def save_json(path: Path, data):
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def safe_error_diagnostics(exc: Exception) -> dict[str, str]:
+    category = getattr(exc, "diagnostic_category", UNKNOWN)
+    if not isinstance(category, str) or category not in DIAGNOSTIC_CATEGORIES:
+        category = UNKNOWN
+    diagnostic = {"diagnostic_category": category}
+    code = getattr(exc, "bridge_error_code", None)
+    if (
+        isinstance(code, str)
+        and code in STRUCTURED_ERROR_CATEGORIES
+        and category_for_structured_code(code) == category
+    ):
+        diagnostic["provider_error_code"] = code
+    return diagnostic
+
+
+def sync_bridge_telemetry(labeler, manifest: dict) -> None:
+    provider = getattr(labeler, "provider", None)
+    snapshot_fn = getattr(provider, "telemetry_snapshot", None)
+    if not callable(snapshot_fn):
+        return
+    snapshot = snapshot_fn()
+    mappings = {
+        "bridge_calls_attempted": "bridge_calls_attempted",
+        "bridge_results_received": "bridge_results_received",
+        "provider_responses_received": "responses_received",
+        "inferences_confirmed": "inferences_confirmed",
+    }
+    for source, target in mappings.items():
+        value = snapshot.get(source, 0)
+        if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+            manifest[target] = value
+    manifest["model_invoked"] = manifest["inferences_confirmed"] > 0
+
+
 def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cases: int,
-             max_calls: int, timeout: float, real: bool, consent: bool):
+             max_calls: int, timeout: float, real: bool, consent: bool,
+             case_id: str | None = None):
     config = yaml.safe_load((ROOT / "configuracion" / "evaluacion.yaml").read_text(encoding="utf-8"))
     if config.get("real_inference_default") is not False:
         raise ValueError("Real inference default must be disabled")
@@ -159,11 +201,16 @@ def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cas
     if real and (not consent or mode != "run"):
         raise ValueError("Real inference needs --real and --approve-real for run")
     selected = select_cases(which, batch)
+    if case_id is not None:
+        filtered = [(cid, root) for cid, root in selected if cid == case_id]
+        if not filtered:
+            raise ValueError("Case identifier is not in the selected set")
+        selected = filtered
     if len(selected) > max_cases:
         raise ValueError("Selection exceeds --max-cases; no cases executed")
-    if real and len(selected) * repetitions > max_calls:
-        raise ValueError("Requested calls exceed the explicitly approved cap")
-    if mode == "run" and len(selected) * repetitions > max_calls:
+    if len(selected) * repetitions > max_calls:
+        if real:
+            raise ValueError("Requested calls exceed the explicitly approved cap")
         raise ValueError("Run exceeds maximum call budget")
     folder = new_run_dir()
     input_hashes = {}
@@ -171,7 +218,8 @@ def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cas
         input_hashes[cid] = record_sha(manifest_path(root, cid, "entrada.json"))
     manifest = {
         "run_id": folder.name, "started_utc": datetime.now(timezone.utc).isoformat(),
-        "set": which, "batch": batch, "cases": [cid for cid, _ in selected],
+        "set": which, "batch": batch, "selected_case": case_id,
+        "cases": [cid for cid, _ in selected],
         "input_sha256": input_hashes, "repetitions": repetitions,
         "provider_requested": "codex" if real else "mock",
         "model_requested": "provider_default" if real else "none",
@@ -180,6 +228,9 @@ def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cas
         "max_calls": max_calls, "real_authorization": real and consent,
         "audit": config["audit"], "external_submission": False,
         "model_invoked": False, "observed_calls": 0,
+        "runner_calls_attempted": 0, "bridge_calls_attempted": 0,
+        "bridge_results_received": 0, "responses_received": 0,
+        "inferences_confirmed": 0,
         "status": "PREPARED" if mode == "prepare" else "RUNNING",
         "artifacts_disposable": True
     }
@@ -213,11 +264,15 @@ def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cas
                     if manifest["observed_calls"] >= max_calls:
                         item.update(status="BUDGET_EXHAUSTED", error="call_cap")
                     else:
+                        manifest["runner_calls_attempted"] += 1
                         manifest["observed_calls"] += 1
-                        manifest["model_invoked"] = real
                         start = time.monotonic()
                         result = asyncio.run(call_one(req))
                         raw = result.model_dump()
+                        if real:
+                            sync_bridge_telemetry(labeler, manifest)
+                        else:
+                            manifest["responses_received"] += 1
                         item.update(status="COMPLETED", raw_output=raw,
                                     elapsed_seconds=round(time.monotonic() - start, 3),
                                     objective_checks={
@@ -230,7 +285,10 @@ def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cas
                             item["status"] = "OBJECTIVE_FAILURE"
                 except Exception as exc:
                     # Never record exception text: it can contain private user input.
-                    item.update(status="ERROR", error_type=type(exc).__name__)
+                    if real:
+                        sync_bridge_telemetry(labeler, manifest)
+                    item.update(status="ERROR", error_type=type(exc).__name__,
+                                **safe_error_diagnostics(exc))
                 results.append(item)
                 save_json(folder / "results.json", results)
     except (KeyboardInterrupt, SystemExit):
@@ -299,6 +357,7 @@ def main():
         p = sub.add_parser(command)
         p.add_argument("--set", choices=sorted(SETS), default="piloto")
         p.add_argument("--batch")
+        p.add_argument("--case", dest="case_id")
         p.add_argument("--repetitions", type=int, default=1)
         p.add_argument("--max-cases", type=int, default=60)
         p.add_argument("--max-calls", type=int, default=60)
@@ -319,7 +378,8 @@ def main():
         elif args.command in ("prepare", "run"):
             answer, folder = make_run(args.set, args.batch, args.command,
                                       args.repetitions, args.max_cases, args.max_calls,
-                                      args.timeout, args.real, args.approve_real)
+                                      args.timeout, args.real, args.approve_real,
+                                      args.case_id)
             answer["directory"] = str(folder)
         elif args.command == "export":
             answer = {"export_directory": str(export_run(args.run_dir))}

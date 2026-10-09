@@ -4,6 +4,7 @@ These use a facade double so CI never invokes paid/external Codex inference.
 """
 from __future__ import annotations
 
+import builtins
 import types
 from pathlib import Path
 from types import SimpleNamespace
@@ -11,9 +12,25 @@ from types import SimpleNamespace
 import pytest
 
 from p4_semantic_labeler.config import Settings
-from p4_semantic_labeler.core.errors import ProviderFailure, ProviderTimeout
+from p4_semantic_labeler.core.errors import (
+    ProviderFailure,
+    ProviderTimeout,
+    ProviderUnavailable,
+)
 from p4_semantic_labeler.core.models import LabelRequest, Subject
 from p4_semantic_labeler.core.service import Labeler
+from p4_semantic_labeler.providers import codex_bridge as codex_bridge_provider
+from p4_semantic_labeler.providers.codex_diagnostics import (
+    AUTHENTICATION,
+    BRIDGE_EXECUTION_FAILED,
+    CAPABILITY_UNAVAILABLE,
+    CLI_UNAVAILABLE,
+    EMPTY_RESPONSE,
+    PERMISSION_DENIED,
+    TIMEOUT,
+    UNKNOWN,
+)
+from p4_semantic_labeler.temp_directories import TemporaryDirectoryError
 
 
 @pytest.fixture
@@ -47,12 +64,12 @@ def fake_bridge(monkeypatch):
     module.CodexBridge = Bridge
     monkeypatch.setattr("p4_semantic_labeler.providers.codex_bridge.importlib.import_module",
                         lambda name: module)
-    return calls, response
+    return calls, response, module
 
 
 @pytest.mark.asyncio
 async def test_codex_frozen_public_interface_with_accepted_mcp_risk(fake_bridge):
-    calls, response = fake_bridge
+    calls, response, _ = fake_bridge
     settings = Settings(provider="codex", provider_timeout_seconds=5)
     labeler = Labeler(settings=settings)
     request = LabelRequest(subject=Subject(name="process_pending_orders"),
@@ -81,7 +98,7 @@ async def test_codex_frozen_public_interface_with_accepted_mcp_risk(fake_bridge)
 
 @pytest.mark.asyncio
 async def test_codex_error_results_are_not_false_success(fake_bridge):
-    _, response = fake_bridge
+    _, response, _ = fake_bridge
     response.ok = False
     response.content = "secret provider text"
     response.error = {"code": "CODEX_PROCESS_FAILED", "message": "SECRET"}
@@ -92,7 +109,7 @@ async def test_codex_error_results_are_not_false_success(fake_bridge):
 
 @pytest.mark.asyncio
 async def test_codex_timeout_result(fake_bridge):
-    _, response = fake_bridge
+    _, response, _ = fake_bridge
     response.ok = False
     response.error = {"code": "CODEX_TIMEOUT", "message": "SECRET"}
     with pytest.raises(ProviderTimeout):
@@ -102,7 +119,7 @@ async def test_codex_timeout_result(fake_bridge):
 
 @pytest.mark.asyncio
 async def test_codex_authentication_error(fake_bridge):
-    _, response = fake_bridge
+    _, response, _ = fake_bridge
     response.error = RuntimeError("not authorized")
     with pytest.raises(ProviderFailure):
         await Labeler(settings=Settings(provider="codex")).agenerate(
@@ -111,7 +128,139 @@ async def test_codex_authentication_error(fake_bridge):
 
 @pytest.mark.asyncio
 async def test_codex_uses_configured_existing_workspace(fake_bridge, tmp_path):
-    calls, _ = fake_bridge
+    calls, _, _ = fake_bridge
     config = Settings(provider="codex", codex_workspace=tmp_path)
     await Labeler(settings=config).agenerate(LabelRequest(subject=Subject(name="example")))
     assert calls[0] == ("constructor", [str(tmp_path)])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("exception_name", "public_error", "category"),
+    [
+        ("AuthenticationError", ProviderUnavailable, AUTHENTICATION),
+        ("CapabilityUnavailableError", ProviderUnavailable, CAPABILITY_UNAVAILABLE),
+        ("ServiceUnavailableError", ProviderUnavailable, BRIDGE_EXECUTION_FAILED),
+        ("RunSecurityRejectedError", ProviderUnavailable, PERMISSION_DENIED),
+        ("BridgeTimeoutError", ProviderTimeout, TIMEOUT),
+        ("PermissionError", ProviderFailure, PERMISSION_DENIED),
+        ("FileNotFoundError", ProviderFailure, CLI_UNAVAILABLE),
+        ("RuntimeError", ProviderFailure, UNKNOWN),
+    ],
+)
+async def test_codex_exception_diagnostics_are_categorized_without_text_leak(
+    fake_bridge, exception_name, public_error, category
+):
+    _, response, module = fake_bridge
+    exception_type = getattr(module, exception_name, None) or getattr(builtins, exception_name)
+    response.error = exception_type("PRIVATE_SECRET detail")
+    labeler = Labeler(settings=Settings(provider="codex"))
+
+    with pytest.raises(public_error) as raised:
+        await labeler.agenerate(LabelRequest(subject=Subject(name="example")))
+
+    assert raised.value.diagnostic_category == category
+    assert "PRIVATE_SECRET" not in str(raised.value)
+    assert labeler.provider.telemetry_snapshot() == {
+        "bridge_calls_attempted": 1,
+        "bridge_results_received": 0,
+        "provider_responses_received": 0,
+        "inferences_confirmed": 0,
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("code", "category", "public_error"),
+    [
+        ("CODEX_AUTH_REQUIRED", AUTHENTICATION, ProviderUnavailable),
+        ("CODEX_NOT_FOUND", CLI_UNAVAILABLE, ProviderUnavailable),
+        ("CODEX_TIMEOUT", TIMEOUT, ProviderTimeout),
+        ("CODEX_EXIT_NONZERO", BRIDGE_EXECUTION_FAILED, ProviderFailure),
+        ("CODEX_EMPTY_RESPONSE", EMPTY_RESPONSE, ProviderFailure),
+        ("OUTPUT_LAST_MESSAGE_MISSING", BRIDGE_EXECUTION_FAILED, ProviderFailure),
+        ("UNRECOGNIZED_PRIVATE_CODE", UNKNOWN, ProviderFailure),
+    ],
+)
+async def test_codex_structured_result_error_uses_allowlisted_code_only(
+    fake_bridge, code, category, public_error
+):
+    _, response, _ = fake_bridge
+    response.ok = False
+    response.content = ""
+    response.error = {"code": code, "message": "PRIVATE_SECRET provider detail"}
+    labeler = Labeler(settings=Settings(provider="codex"))
+
+    with pytest.raises(public_error) as raised:
+        await labeler.agenerate(LabelRequest(subject=Subject(name="example")))
+
+    assert raised.value.diagnostic_category == category
+    assert raised.value.bridge_result_received is True
+    assert "PRIVATE_SECRET" not in str(raised.value)
+    if code == "UNRECOGNIZED_PRIVATE_CODE":
+        assert not hasattr(raised.value, "bridge_error_code")
+    else:
+        assert raised.value.bridge_error_code == code
+    assert labeler.provider.telemetry_snapshot() == {
+        "bridge_calls_attempted": 1,
+        "bridge_results_received": 1,
+        "provider_responses_received": 0,
+        "inferences_confirmed": 0,
+    }
+
+
+@pytest.mark.asyncio
+async def test_codex_empty_response_is_distinct_from_execution_failure(fake_bridge):
+    _, response, _ = fake_bridge
+    response.content = "  "
+    labeler = Labeler(settings=Settings(provider="codex"))
+
+    with pytest.raises(ProviderFailure) as raised:
+        await labeler.agenerate(LabelRequest(subject=Subject(name="example")))
+
+    assert raised.value.diagnostic_category == EMPTY_RESPONSE
+    assert raised.value.bridge_result_received is True
+    assert labeler.provider.telemetry_snapshot() == {
+        "bridge_calls_attempted": 1,
+        "bridge_results_received": 1,
+        "provider_responses_received": 0,
+        "inferences_confirmed": 0,
+    }
+
+
+@pytest.mark.asyncio
+async def test_codex_success_confirms_response_and_inference(fake_bridge):
+    _, _, _ = fake_bridge
+    labeler = Labeler(settings=Settings(provider="codex"))
+
+    result = await labeler.agenerate(LabelRequest(subject=Subject(name="example")))
+
+    assert result.provider == "codex"
+    assert labeler.provider.telemetry_snapshot() == {
+        "bridge_calls_attempted": 1,
+        "bridge_results_received": 1,
+        "provider_responses_received": 1,
+        "inferences_confirmed": 1,
+    }
+
+
+@pytest.mark.asyncio
+async def test_temp_workspace_permission_diagnostic_has_no_bridge_attempt(
+    fake_bridge, monkeypatch
+):
+    def deny_workspace():
+        raise TemporaryDirectoryError("PermissionError while creating workspace", permission_denied=True)
+
+    monkeypatch.setattr(codex_bridge_provider, "create_run_directory", deny_workspace)
+    labeler = Labeler(settings=Settings(provider="codex"))
+
+    with pytest.raises(ProviderFailure) as raised:
+        await labeler.agenerate(LabelRequest(subject=Subject(name="example")))
+
+    assert raised.value.diagnostic_category == PERMISSION_DENIED
+    assert labeler.provider.telemetry_snapshot() == {
+        "bridge_calls_attempted": 0,
+        "bridge_results_received": 0,
+        "provider_responses_received": 0,
+        "inferences_confirmed": 0,
+    }

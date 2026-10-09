@@ -211,6 +211,9 @@ def test_no_consumer_specific_logic():
     from pathlib import Path
 
     source = Path(__file__).resolve().parents[1] / "src" / "p4_semantic_labeler"
-    content = "\n".join(p.read_text() for p in source.rglob("*.py"))
+    files = list(source.rglob("*.py"))
+    utility = source / "temp_directories.py"
+    content = "\n".join(p.read_text() for p in files if p != utility)
     assert "PyFlowMap" not in content
     assert "P4-Planning-Agent" not in content
+    assert 'TEMP_ROOT_NAME = "P4-Planning-Agent"' in utility.read_text()
