@@ -52,8 +52,8 @@ def fake_bridge(monkeypatch):
     response = SimpleNamespace(ok=True, content="Validar pedidos pendientes", error=None)
 
     class Bridge:
-        def __init__(self, *, allowed_roots):
-            calls.append(("constructor", allowed_roots))
+        def __init__(self, *, state_dir, allowed_roots):
+            calls.append(("constructor", Path(state_dir), allowed_roots))
 
         def run(self, prompt, **kwargs):
             calls.append(("run", prompt, kwargs))
@@ -78,8 +78,15 @@ async def test_codex_frozen_public_interface_with_accepted_mcp_risk(fake_bridge)
     result = await labeler.agenerate(request)
     assert result.label == response.content and result.provider == "codex"
     assert [call[0] for call in calls] == ["constructor", "run"]
-    assert len(calls[0][1]) == 1
-    assert Path(calls[0][1][0]).is_dir()
+    state_dir = calls[0][1]
+    assert state_dir.name == "bridge-state"
+    assert state_dir.parent.name.startswith("20")
+    assert state_dir.is_dir()
+    assert len(calls[0][2]) == 1
+    workspace = Path(calls[0][2][0])
+    assert workspace.name == "workspace"
+    assert workspace.parent == state_dir.parent
+    assert workspace != state_dir
     _, prompt, kwargs = calls[1]
     assert '"documentation"' in prompt
     assert "Validate pending orders" in prompt
@@ -131,7 +138,26 @@ async def test_codex_uses_configured_existing_workspace(fake_bridge, tmp_path):
     calls, _, _ = fake_bridge
     config = Settings(provider="codex", codex_workspace=tmp_path)
     await Labeler(settings=config).agenerate(LabelRequest(subject=Subject(name="example")))
-    assert calls[0] == ("constructor", [str(tmp_path)])
+    assert calls[0][0] == "constructor"
+    assert calls[0][2] == [str(tmp_path)]
+    assert calls[0][1].name == "bridge-state"
+    assert calls[0][1].is_dir()
+    assert tmp_path not in calls[0][1].parents
+
+
+@pytest.mark.asyncio
+async def test_codex_reuses_bridge_and_managed_directories(fake_bridge):
+    calls, _, _ = fake_bridge
+    labeler = Labeler(settings=Settings(provider="codex"))
+    request = LabelRequest(subject=Subject(name="example"))
+
+    await labeler.agenerate(request)
+    first_workspace = calls[1][2]["cwd"]
+    await labeler.agenerate(request)
+
+    assert [call[0] for call in calls].count("constructor") == 1
+    assert [call[0] for call in calls].count("run") == 2
+    assert calls[2][2]["cwd"] == first_workspace
 
 
 @pytest.mark.asyncio
@@ -252,6 +278,31 @@ async def test_temp_workspace_permission_diagnostic_has_no_bridge_attempt(
         raise TemporaryDirectoryError("PermissionError while creating workspace", permission_denied=True)
 
     monkeypatch.setattr(codex_bridge_provider, "create_run_directory", deny_workspace)
+    labeler = Labeler(settings=Settings(provider="codex"))
+
+    with pytest.raises(ProviderFailure) as raised:
+        await labeler.agenerate(LabelRequest(subject=Subject(name="example")))
+
+    assert raised.value.diagnostic_category == PERMISSION_DENIED
+    assert labeler.provider.telemetry_snapshot() == {
+        "bridge_calls_attempted": 0,
+        "bridge_results_received": 0,
+        "provider_responses_received": 0,
+        "inferences_confirmed": 0,
+    }
+
+
+@pytest.mark.asyncio
+async def test_temp_bridge_state_permission_diagnostic_has_no_bridge_attempt(
+    fake_bridge, monkeypatch, tmp_path
+):
+    def deny_state(_parent, _name):
+        raise TemporaryDirectoryError(
+            "PermissionError while creating bridge state", permission_denied=True
+        )
+
+    monkeypatch.setattr(codex_bridge_provider, "create_run_directory", lambda: tmp_path)
+    monkeypatch.setattr(codex_bridge_provider, "create_run_subdirectory", deny_state)
     labeler = Labeler(settings=Settings(provider="codex"))
 
     with pytest.raises(ProviderFailure) as raised:

@@ -109,3 +109,22 @@ def create_run_directory(
             ) from None
 
     raise TemporaryDirectoryError("Unable to allocate a unique temporary run directory")
+
+
+def create_run_subdirectory(parent: Path, name: str) -> Path:
+    """Create one named child directory without reusing an existing child."""
+    if not name or name in {".", ".."} or Path(name).name != name:
+        raise ValueError("Temporary subdirectory name must be a single path component")
+    _validate_directory(parent, "temporary run directory")
+    destination = parent / name
+    try:
+        os.mkdir(destination)
+    except FileExistsError:
+        raise TemporaryDirectoryError("Temporary subdirectory already exists") from None
+    except PermissionError:
+        raise TemporaryDirectoryError(
+            "PermissionError while creating temporary subdirectory", permission_denied=True
+        ) from None
+    except OSError:
+        raise TemporaryDirectoryError("Unable to create temporary subdirectory") from None
+    return destination

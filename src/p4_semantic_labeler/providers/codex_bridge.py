@@ -30,7 +30,10 @@ from p4_semantic_labeler.providers.codex_diagnostics import (
     UNKNOWN,
     category_for_structured_code,
 )
-from p4_semantic_labeler.temp_directories import create_run_directory
+from p4_semantic_labeler.temp_directories import (
+    create_run_directory,
+    create_run_subdirectory,
+)
 from p4_semantic_labeler.providers.base import ProviderPrompt, ProviderResponse
 
 
@@ -41,6 +44,7 @@ class CodexBridgeProvider:
         self.settings = settings
         self._bridge: Any = None
         self._workspace: Path | None = None
+        self._bridge_state: Path | None = None
         self._lock = threading.Lock()
         self._telemetry_lock = threading.Lock()
         self._telemetry = {
@@ -141,13 +145,19 @@ class CodexBridgeProvider:
     def _get_bridge(self, module: Any) -> tuple[Any, Path]:
         with self._lock:
             if self._bridge is None:
+                run_directory = create_run_directory()
                 if self.settings.codex_workspace is None:
-                    workspace = create_run_directory()
+                    workspace = create_run_subdirectory(run_directory, "workspace")
                 else:
                     workspace = self.settings.codex_workspace
-                bridge = module.CodexBridge(allowed_roots=[str(workspace)])
+                state_dir = create_run_subdirectory(run_directory, "bridge-state")
+                bridge = module.CodexBridge(
+                    state_dir=state_dir,
+                    allowed_roots=[str(workspace)],
+                )
                 self._bridge = bridge
                 self._workspace = workspace
+                self._bridge_state = state_dir
             assert self._workspace is not None
             return self._bridge, self._workspace
 

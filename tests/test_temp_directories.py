@@ -13,6 +13,7 @@ from p4_semantic_labeler.temp_directories import (
     TEMP_ROOT_NAME,
     TemporaryDirectoryError,
     create_run_directory,
+    create_run_subdirectory,
 )
 
 
@@ -146,3 +147,36 @@ def test_directory_identifier_matches_contract(tmp_path):
         token_hex=lambda _: "0123abcd",
     )
     assert re.fullmatch(r"\d{8}T\d{6}Z-[0-9a-f]{8}", result.name)
+
+
+def test_run_subdirectory_is_created_with_os_mkdir(tmp_path, monkeypatch):
+    parent = tmp_path / "run"
+    parent.mkdir()
+    mkdir = os.mkdir
+    created = []
+
+    def record_mkdir(path):
+        created.append(Path(path))
+        mkdir(path)
+
+    monkeypatch.setattr(temp_directories.os, "mkdir", record_mkdir)
+    result = create_run_subdirectory(parent, "bridge-state")
+
+    assert result == parent / "bridge-state"
+    assert result.is_dir()
+    assert created == [result]
+
+
+def test_run_subdirectory_permission_error_is_safe(tmp_path, monkeypatch):
+    parent = tmp_path / "run"
+    parent.mkdir()
+
+    def fail_mkdir(_path):
+        raise PermissionError("private path detail")
+
+    monkeypatch.setattr(temp_directories.os, "mkdir", fail_mkdir)
+    with pytest.raises(TemporaryDirectoryError, match="PermissionError") as error:
+        create_run_subdirectory(parent, "bridge-state")
+
+    assert error.value.permission_denied
+    assert "private path detail" not in str(error.value)
