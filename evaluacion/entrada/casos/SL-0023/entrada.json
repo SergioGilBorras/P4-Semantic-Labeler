@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "document",
+    "name": "financial_statement"
+  },
+  "context": {
+    "documentation": "Documents quarterly revenue, expenses and cash flow."
+  },
+  "output_type": "summary",
+  "max_chars": 132,
+  "style": "academic",
+  "language": "es"
+}

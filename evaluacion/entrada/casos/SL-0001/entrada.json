@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "process_pending_orders"
+  },
+  "context": {
+    "documentation": "Validates purchase orders and prepares valid ones for dispatch."
+  },
+  "output_type": "title",
+  "max_chars": 45,
+  "style": "neutral",
+  "language": "es"
+}

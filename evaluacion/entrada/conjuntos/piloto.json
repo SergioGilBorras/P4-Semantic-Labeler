@@ -1,0 +1,14 @@
+{
+  "name": "piloto",
+  "derived_from": "calibracion+regresion+reserva",
+  "ids": [
+    "SL-0001",
+    "SL-0002",
+    "SL-0008",
+    "SL-0021",
+    "SL-0038",
+    "SL-0043",
+    "SL-0052",
+    "SL-0055"
+  ]
+}

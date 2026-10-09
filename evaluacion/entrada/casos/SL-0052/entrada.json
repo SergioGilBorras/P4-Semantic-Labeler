@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "concept",
+    "name": "emoji_status"
+  },
+  "context": {
+    "documentation": "Describes status using a composed emoji 👩‍💻."
+  },
+  "output_type": "title",
+  "max_chars": 20,
+  "style": "neutral",
+  "language": "es"
+}

@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "merge_config"
+  },
+  "context": {
+    "documentation": "Merges override settings while retaining unspecified defaults."
+  },
+  "output_type": "summary",
+  "max_chars": 100,
+  "style": "neutral",
+  "language": "en"
+}

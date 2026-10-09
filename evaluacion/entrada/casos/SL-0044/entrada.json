@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "generate_manifest"
+  },
+  "context": {
+    "documentation": "Lists filenames and their SHA-256 checksums."
+  },
+  "output_type": "summary",
+  "max_chars": 114,
+  "style": "neutral",
+  "language": "es"
+}

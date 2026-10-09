@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "update_index"
+  },
+  "context": {
+    "documentation": "Rebuilds a local document search index after validation."
+  },
+  "output_type": "title",
+  "max_chars": 48,
+  "style": "neutral",
+  "language": "es"
+}

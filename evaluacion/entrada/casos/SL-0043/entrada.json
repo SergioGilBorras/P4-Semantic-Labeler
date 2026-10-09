@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "condition",
+    "name": "is_cache_warm"
+  },
+  "context": {
+    "documentation": "True when initial cache population is complete."
+  },
+  "output_type": "title",
+  "max_chars": 30,
+  "style": "neutral",
+  "language": "en"
+}

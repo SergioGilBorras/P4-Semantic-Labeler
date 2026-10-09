@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "calculate_median"
+  },
+  "context": {
+    "documentation": "Computes the median of numeric values, not their arithmetic mean."
+  },
+  "output_type": "title",
+  "max_chars": 26,
+  "style": "neutral",
+  "language": "en"
+}

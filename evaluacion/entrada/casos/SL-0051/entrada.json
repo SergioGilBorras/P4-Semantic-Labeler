@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "concept",
+    "name": "max_chars_tiny"
+  },
+  "context": {
+    "documentation": "A tiny label is required for a generic network request."
+  },
+  "output_type": "title",
+  "max_chars": 1,
+  "style": "neutral",
+  "language": "en"
+}

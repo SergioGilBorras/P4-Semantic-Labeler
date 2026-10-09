@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "condition",
+    "name": "reject_unsigned_payload"
+  },
+  "context": {
+    "documentation": "Rejects unsigned messages; signed messages proceed to verification."
+  },
+  "output_type": "summary",
+  "max_chars": 100,
+  "style": "neutral",
+  "language": "en"
+}

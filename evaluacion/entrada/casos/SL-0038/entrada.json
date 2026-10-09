@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "restore_backup"
+  },
+  "context": {
+    "documentation": "Restores a local backup after verifying its checksum."
+  },
+  "output_type": "title",
+  "max_chars": 48,
+  "style": "neutral",
+  "language": "en"
+}

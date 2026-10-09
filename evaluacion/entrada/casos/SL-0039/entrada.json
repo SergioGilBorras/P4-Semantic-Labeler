@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "mark_unread"
+  },
+  "context": {
+    "documentation": "Marks the selected message as not yet read."
+  },
+  "output_type": "title",
+  "max_chars": 35,
+  "style": "neutral",
+  "language": "es"
+}

@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "concept",
+    "name": "token_expiry"
+  },
+  "context": {
+    "documentation": "Describes expiry of a session token at its recorded timestamp."
+  },
+  "output_type": "summary",
+  "max_chars": 85,
+  "style": "neutral",
+  "language": "es"
+}

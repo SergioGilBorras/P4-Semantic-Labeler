@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "sleep_until_ready"
+  },
+  "context": {
+    "documentation": "Waits for a readiness signal with a finite timeout."
+  },
+  "output_type": "title",
+  "max_chars": 36,
+  "style": "neutral",
+  "language": "en"
+}

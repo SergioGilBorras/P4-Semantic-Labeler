@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "condition",
+    "name": "no_items_found"
+  },
+  "context": {
+    "documentation": "Search returned zero items without signaling a server error."
+  },
+  "output_type": "title",
+  "max_chars": 32,
+  "style": "neutral",
+  "language": "es"
+}

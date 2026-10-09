@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "event",
+    "name": "permission_denied"
+  },
+  "context": {
+    "documentation": "A request was rejected due to insufficient access rights."
+  },
+  "output_type": "title",
+  "max_chars": 43,
+  "style": "neutral",
+  "language": "es"
+}

@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "condition",
+    "name": "is_not_authorized"
+  },
+  "context": {
+    "documentation": "True when a visitor lacks permission."
+  },
+  "output_type": "title",
+  "max_chars": 38,
+  "style": "neutral",
+  "language": "es"
+}

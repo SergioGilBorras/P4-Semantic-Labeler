@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "event",
+    "name": "payment_declined"
+  },
+  "context": {
+    "documentation": "The issuing bank rejected the transaction; payment did not complete."
+  },
+  "output_type": "title",
+  "max_chars": 40,
+  "style": "neutral",
+  "language": "es"
+}

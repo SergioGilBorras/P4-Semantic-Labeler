@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "archive_old_records"
+  },
+  "context": {
+    "documentation": "Moves records older than ninety days into an archive, without deleting them."
+  },
+  "output_type": "summary",
+  "max_chars": 110,
+  "style": "neutral",
+  "language": "en"
+}

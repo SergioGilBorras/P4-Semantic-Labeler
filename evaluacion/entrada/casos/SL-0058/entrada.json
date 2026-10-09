@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "concurrent_queue"
+  },
+  "context": {
+    "documentation": "Executes at most two queued tasks at once, respecting arrival order."
+  },
+  "output_type": "summary",
+  "max_chars": 95,
+  "style": "neutral",
+  "language": "es"
+}

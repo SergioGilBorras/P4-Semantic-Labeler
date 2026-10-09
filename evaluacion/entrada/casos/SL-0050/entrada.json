@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "document",
+    "name": "document_index"
+  },
+  "context": {
+    "documentation": "Contains document titles and tags, not full text."
+  },
+  "output_type": "summary",
+  "max_chars": 100,
+  "style": "academic",
+  "language": "en"
+}

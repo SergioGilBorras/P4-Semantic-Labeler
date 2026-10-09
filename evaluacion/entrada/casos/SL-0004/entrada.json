@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "retry_failed_jobs"
+  },
+  "context": {
+    "documentation": "Retries only failed jobs, at most three times."
+  },
+  "output_type": "title",
+  "max_chars": 52,
+  "style": "neutral",
+  "language": "en"
+}

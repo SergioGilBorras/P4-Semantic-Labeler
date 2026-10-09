@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "download_attachment"
+  },
+  "context": {
+    "documentation": "Retrieves an attachment by identifier without executing it."
+  },
+  "output_type": "title",
+  "max_chars": 48,
+  "style": "neutral",
+  "language": "en"
+}

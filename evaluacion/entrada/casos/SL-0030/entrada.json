@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "condition",
+    "name": "schema_mismatch"
+  },
+  "context": {
+    "documentation": "Input values do not match the required schema."
+  },
+  "output_type": "title",
+  "max_chars": 37,
+  "style": "neutral",
+  "language": "en"
+}

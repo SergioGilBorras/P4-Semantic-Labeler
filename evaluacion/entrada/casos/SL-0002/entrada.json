@@ -1,0 +1,13 @@
+{
+  "subject": {
+    "kind": "condition",
+    "name": "cache_invalid"
+  },
+  "context": {
+    "documentation": "True when the cache has expired and must be refreshed before reading."
+  },
+  "output_type": "title",
+  "max_chars": 35,
+  "style": "neutral",
+  "language": "es"
+}
