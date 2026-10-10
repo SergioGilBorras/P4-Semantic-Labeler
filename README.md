@@ -14,7 +14,13 @@ codex login
 export P4_LABELER_PROVIDER=codex
 ```
 
-The Codex bridge uses that login, not an API key. Use `P4_LABELER_PROVIDER=mock` for tests and demonstrations without real model inference. On Windows, use `$env:NAME = 'value'` to set an environment variable.
+The Codex bridge uses that login, not an API key. Managed temporary run directories
+are created by the independently installable `portable-tempdirs` dependency.
+Each run is retained intentionally, with separate `workspace` and `bridge-state`
+children; the library releases its temporary directory owner without deleting
+previous runs. Existing historical run directories are never swept. The
+`P4_LABELER_CODEX_WORKSPACE` override still uses the explicitly configured
+workspace rather than creating a new managed workspace. Use `P4_LABELER_PROVIDER=mock` for tests and demonstrations without real model inference. On Windows, use `$env:NAME = 'value'` to set an environment variable.
 
 ```bash
 python -m venv .venv
