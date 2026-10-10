@@ -10,7 +10,14 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "P4-Semantic-Labeler contributors" }]
-dependencies = ["fastapi>=0.110,<1", "pydantic>=2,<3", "uvicorn>=0.27,<1", "python-multipart>=0.0.9"]
+dependencies = [
+    "fastapi>=0.110,<1",
+    "pydantic>=2,<3",
+    "uvicorn>=0.27,<1",
+    "python-multipart>=0.0.9",
+    # Pin the validated standalone library until its first release is published.
+    "portable-tempdirs @ git+https://github.com/SergioGilBorras/portable-tempdirs.git@ab9bb3c044ff41e6d8a170f1aaac0237e2eab434",
+]
 
 [project.optional-dependencies]
 mcp = ["mcp>=1.0,<2"]
