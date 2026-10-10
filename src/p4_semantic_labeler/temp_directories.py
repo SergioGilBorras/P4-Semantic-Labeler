@@ -70,7 +70,7 @@ def _validate_directory(path: Path, description: str) -> None:
 
 def create_run_subdirectory(parent: Path, name: str) -> Path:
     """Create one named child directory without reusing an existing child."""
-    if not isinstance(name, str) or not name or name in {".", ".."} or "/" in name or "\\\\" in name or Path(name).name != name:
+    if not isinstance(name, str) or not name or name in {".", ".."} or "/" in name or "\\" in name or Path(name).name != name:
         raise ValueError("Temporary subdirectory name must be a single path component")
     _validate_directory(parent, "temporary run directory")
     destination = parent / name
