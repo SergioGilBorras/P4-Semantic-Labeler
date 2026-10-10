@@ -6,7 +6,7 @@
 
 ## Quick start
 
-Python 3.11+. To install the service **together with** the reviewed Codex Bridge 1.2.0 and portable-tempdirs 0.1.1 using pip from this checkout:
+Python 3.11+. To install the service **together with** the reviewed Codex Bridge 1.2.0 and portable-tempdirs 0.1.2 using pip from this checkout:
 
 ```bash
 python -m pip install -e '.[codex]'
