@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
+from portable_tempdirs import temporary_directory
 
 from p4_semantic_labeler.config import Settings
 from p4_semantic_labeler.core.service import Labeler
@@ -32,3 +35,17 @@ def labeler(settings):
 @pytest.fixture
 def stub_class():
     return StubProvider
+
+
+
+@pytest.fixture
+def portable_tmp_path():
+    """Owned, isolated fixture avoiding pytest's global tmp_path machinery."""
+    project_root = Path(__file__).resolve().parents[1]
+    fixture_root = project_root / ".portable-test-workspaces"
+    fixture_root.mkdir(exist_ok=True)
+    owner = temporary_directory("SemanticTests", parent=fixture_root)
+    try:
+        yield owner.path
+    finally:
+        owner.cleanup()
