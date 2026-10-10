@@ -216,4 +216,4 @@ def test_no_consumer_specific_logic():
     content = "\n".join(p.read_text() for p in files if p != utility)
     assert "PyFlowMap" not in content
     assert "P4-Planning-Agent" not in content
-    assert 'TEMP_ROOT_NAME = "P4-Planning-Agent"' in utility.read_text()
+    assert 'TEMP_ROOT_NAME = "P4-Semantic-Labeler"' in utility.read_text()
