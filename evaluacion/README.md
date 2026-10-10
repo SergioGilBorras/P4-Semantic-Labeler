@@ -4,7 +4,8 @@ Versioned synthetic requests live in `entrada/casos/`; case-specific rubrics liv
 
 The baseline is frozen before optimization. Existing cases may be rerun as often as needed. A fresh batch under `entrada/nuevas/<id>` is first evaluated once without retrospective edits, then explicitly incorporated into `entrada/incorporados.json` and becomes part of the accumulated regression set. Later generalization claims require a genuinely different unseen batch.
 
-Commands:
+## Python laboratory
+
 ```bash
 python -m evaluacion.herramientas.lab validate
 python -m evaluacion.herramientas.lab list
@@ -14,3 +15,49 @@ python -m evaluacion.herramientas.lab run --set acumulada
 ```
 
 Real inference requires explicit CLI consent, provider codex and a bounded call budget; it is disabled by default. Output directories under `salida/` are disposable but **never automatically deleted**. No semantic quality score is assigned by the runner. Evaluation needs a separate assessor receiving frozen rubric only after production. Run output should not be checked into Git.
+
+## Windows PowerShell workflows
+
+Run these commands from the repository root with the project's `.venv` installed:
+
+```powershell
+# Mock evaluation of the eight-case pilot; no real model calls.
+.\evaluacion\run-evaluation-batch.ps1 -SetName piloto -MaxCases 8 -MaxCalls 8
+
+# Mock evaluations for two selected cases in separate runs.
+.\evaluacion\run-evaluation-batch.ps1 -SetName piloto -CaseIds SL-0001,SL-0002 -MaxCases 2 -MaxCalls 2
+
+# Exactly one real inference; requires explicit authorization flags.
+.\evaluacion\run-evaluation-batch.ps1 -SetName piloto -CaseIds SL-0001 -MaxCases 1 -MaxCalls 1 -Real -ApproveReal
+
+# Full pilot with real inference: AT MOST eight model calls.
+.\evaluacion\run-evaluation-batch.ps1 -SetName piloto -MaxCases 8 -MaxCalls 8 -Real -ApproveReal
+
+# Read existing results only; creates no inference.
+.\evaluacion\summarize-evaluations.ps1
+```
+
+`run-evaluation-batch.ps1` calls the existing Python laboratory. If no case IDs are supplied, the complete selected cohort is one Python run. With `-CaseIds`, each ID is a separate run; the total requested repetitions must fit within `-MaxCalls`. To evaluate a larger cohort, increase `-MaxCases` and `-MaxCalls` explicitly. For registered external batches, use `-SetName lote -Batch YOUR_EXISTING_BATCH_ID`. Real model requests only happen with both `-Real` and `-ApproveReal`, so each invocation can incur model usage. The launcher does not retry failed requests. By default it uses the project `.venv` on Windows; `-PythonExecutable` accepts an explicit absolute interpreter path for CI or a separate environment.
+
+`summarize-evaluations.ps1` scans final runs under `evaluacion/salida/`, and writes **`evaluacion/salida/evaluation-summary.json`**. That single file contains run metadata, case IDs, labels, character counts, objective checks, and safe structured diagnostics. It excludes raw prompts, case input content, rubrics and raw provider output objects. It notes skipped/incomplete runs rather than silently interpreting them as success. Inspect it before sharing it outside your machine. Batch execution updates this file automatically, including after a failed attempt where possible.
+
+## Retention and cleanup
+
+Edit **`evaluacion/evaluation-retention.json`** and add or remove exact `run_id` values in `keep_run_ids`. They must match the directory names under `evaluacion/salida/`. The checked-in file initially protects the known successful real pilots and a diagnostic failure from 2026-10-10. This JSON is a user-maintained policy; review changes before committing because your local run IDs may differ.
+
+```powershell
+# Preview only (default): shows eligible old runs but deletes nothing.
+.\evaluacion\cleanup-evaluations.ps1
+
+# Delete eligible runs only after inspecting the preview.
+.\evaluacion\cleanup-evaluations.ps1 -Apply
+
+# Optional: permit cleanup of runs created less than 60 minutes ago.
+.\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0
+```
+
+The cleanup tool never removes a protected ID; by default, it skips runs modified in the last hour. It only considers directories with the laboratory's run-name shape, a matching valid manifest, `artifacts_disposable: true`, a final status, and no detected reparse points in the tree. Unknown and incomplete directories are retained. Without `-Apply` it performs **no deletion**. It deliberately does not remove `salida/` itself or the consolidated JSON file. Shell-based deletion of intentionally persistent laboratory results is **not** the handle-identity-verified cleanup of `portable-tempdirs`; only run it on a trusted local tree with no concurrent writers. Keep evidence that may be needed for batch incorporation, comparison or investigation before applying cleanup. Removal is irreversible.
+
+The project test fixture uses `portable-tempdirs` to clean up its newly owned test workspaces after each test. Stale, unowned directories under `.portable-test-workspaces/` or old Codex CLI profile paths are **outside the scope** of the evaluation cleanup script; inspect them separately. Do not delete historical directories using unchecked recursive fallback code.
+
+Legacy local `prueba*.ps1` scripts are not part of this GitHub workflow. Deleting your untracked local files, if desired, is a separate local action.
