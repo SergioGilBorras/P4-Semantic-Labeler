@@ -27,7 +27,7 @@ jobs:
             $tokens = $null
             $parseErrors = $null
             [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path -LiteralPath $file).Path, [ref]$tokens, [ref]$parseErrors)
-            if (@($parseErrors).Count -gt 0) { throw "PowerShell syntax failed: $file" }
+            if ($null -ne $parseErrors -and $parseErrors.Count -gt 0) { throw "PowerShell syntax failed: $file" }
           }
       - name: Mock evaluation, aggregate and cleanup smoke (Windows Python 3.11)
         if: runner.os == 'Windows' && matrix.python-version == '3.11'
