@@ -13,10 +13,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-from portable_tempdirs import (
-    TemporaryDirectoryError as PortableTemporaryDirectoryError,
-    temporary_directory,
-)
+from portable_tempdirs import temporary_directory
 
 TEMP_ROOT_NAME = "P4-Semantic-Labeler"
 
