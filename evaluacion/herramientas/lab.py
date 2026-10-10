@@ -5,6 +5,7 @@ import argparse
 import asyncio
 import hashlib
 import json
+import os
 import re
 import sys
 import time
@@ -142,7 +143,10 @@ def new_run_dir():
     OUTPUT.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     destination = OUTPUT / f"{timestamp}_{uuid.uuid4().hex[:12]}"
-    destination.mkdir(mode=0o700)
+    if os.name == "nt":
+        destination.mkdir()  # Inherit ACLs from the authorized parent.
+    else:
+        destination.mkdir(mode=0o700)
     return destination
 
 
