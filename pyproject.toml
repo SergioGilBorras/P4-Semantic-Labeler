@@ -20,6 +20,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Opt-in Codex bridge is tied to a reviewed 1.2.0 commit. It depends on the
+# same immutable portable-tempdirs 0.1.1 commit as the core application.
+codex = ["p4-codex-bridge @ git+https://github.com/SergioGilBorras/P4-Codex-Bridge.git@32eb4707a7418c9ef7ed59b22983953337a57bbf"]
 mcp = ["mcp>=1.0,<2"]
 dev = ["pytest>=8", "pytest-asyncio>=0.23", "httpx2>=2.4,<3", "ruff>=0.8", "mcp>=1.0,<2", "PyYAML>=6,<7"]
 

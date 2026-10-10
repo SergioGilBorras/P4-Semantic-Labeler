@@ -6,13 +6,16 @@
 
 ## Quick start
 
-Python 3.11+. Install the service and the optional Codex bridge in the same environment. For actual AI generation, authenticate the official Codex CLI:
+Python 3.11+. To install the service **together with** the reviewed Codex Bridge 1.2.0 and portable-tempdirs 0.1.1 using pip from this checkout:
 
 ```bash
-python -m pip install "p4-codex-bridge @ git+https://github.com/SergioGilBorras/P4-Codex-Bridge.git@32eb4707a7418c9ef7ed59b22983953337a57bbf"
+python -m pip install -e '.[codex]'
+python -m pip check
 codex login
 export P4_LABELER_PROVIDER=codex
 ```
+
+For offline/mocked development checks with the Codex integration installed, use `python -m pip install -e '.[dev,codex]'`. The two upstream packages are pinned to immutable Git commits and are **not** assumed to be published on PyPI. The bridge is optional for `mock` or `disabled` use. On Windows PowerShell, quote the extra as `".[dev,codex]"` and set provider variables using `$env:NAME = 'value'`.
 
 The Codex bridge uses that login, not an API key. The independent
 `portable-tempdirs` dependency creates an **isolated run directory per Codex
