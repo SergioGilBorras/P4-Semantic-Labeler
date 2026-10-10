@@ -55,9 +55,18 @@ def fake_bridge(monkeypatch):
 
     class Bridge:
         def __init__(self, *, state_dir, allowed_roots):
-            calls.append(("constructor", Path(state_dir), allowed_roots))
+            self.state_dir = Path(state_dir)
+            calls.append(("constructor", self.state_dir, allowed_roots))
 
         def run(self, prompt, *, skip_git_repo_check=False, **kwargs):
+            workspace = Path(kwargs["cwd"])
+            assert self.state_dir.is_dir() and workspace.is_dir()
+            assert self.state_dir != workspace
+            (self.state_dir / "test-state.txt").write_text("state", encoding="utf-8")
+            if skip_git_repo_check:
+                # The managed workspace must be empty at the start of every call.
+                assert not any(workspace.iterdir())
+                (workspace / "test-output.txt").write_text("disposable", encoding="utf-8")
             kwargs["skip_git_repo_check"] = skip_git_repo_check
             calls.append(("run", prompt, kwargs))
             if isinstance(response.error, BaseException):
@@ -84,12 +93,14 @@ async def test_codex_frozen_public_interface_with_accepted_mcp_risk(fake_bridge)
     state_dir = calls[0][1]
     assert state_dir.name == "bridge-state"
     assert state_dir.parent.name.startswith("20")
-    assert state_dir.is_dir()
+    assert not state_dir.exists()
+    assert not state_dir.parent.exists()
     assert len(calls[0][2]) == 1
     workspace = Path(calls[0][2][0])
     assert workspace.name == "workspace"
     assert workspace.parent == state_dir.parent
     assert workspace != state_dir
+    assert not workspace.exists()
     assert not (workspace / ".git").exists()
     _, prompt, kwargs = calls[1]
     assert '"documentation"' in prompt
@@ -146,24 +157,31 @@ async def test_codex_uses_configured_existing_workspace(fake_bridge, portable_tm
     assert calls[0][0] == "constructor"
     assert calls[0][2] == [str(portable_tmp_path)]
     assert calls[0][1].name == "bridge-state"
-    assert calls[0][1].is_dir()
+    assert not calls[0][1].exists()
+    assert not calls[0][1].parent.exists()
+    assert portable_tmp_path.is_dir()
     assert portable_tmp_path not in calls[0][1].parents
     assert calls[1][2]["skip_git_repo_check"] is False
 
 
 @pytest.mark.asyncio
-async def test_codex_reuses_bridge_and_managed_directories(fake_bridge):
+async def test_codex_creates_fresh_bridge_and_workspace_for_each_request(fake_bridge):
     calls, _, _ = fake_bridge
     labeler = Labeler(settings=Settings(provider="codex"))
     request = LabelRequest(subject=Subject(name="example"))
 
     await labeler.agenerate(request)
-    first_workspace = calls[1][2]["cwd"]
     await labeler.agenerate(request)
 
-    assert [call[0] for call in calls].count("constructor") == 1
-    assert [call[0] for call in calls].count("run") == 2
-    assert calls[2][2]["cwd"] == first_workspace
+    assert [call[0] for call in calls] == ["constructor", "run", "constructor", "run"]
+    first_state, second_state = calls[0][1], calls[2][1]
+    first_workspace = Path(calls[1][2]["cwd"])
+    second_workspace = Path(calls[3][2]["cwd"])
+    assert first_state != second_state
+    assert first_workspace != second_workspace
+    assert not first_workspace.exists() and not second_workspace.exists()
+    assert not first_state.exists() and not second_state.exists()
+    assert not first_state.parent.exists() and not second_state.parent.exists()
 
 
 @pytest.mark.asyncio
@@ -280,10 +298,13 @@ async def test_codex_success_confirms_response_and_inference(fake_bridge):
 async def test_temp_workspace_permission_diagnostic_has_no_bridge_attempt(
     fake_bridge, monkeypatch
 ):
-    def deny_workspace():
-        raise TemporaryDirectoryError("PermissionError while creating workspace", permission_denied=True)
+    from p4_semantic_labeler import temp_directories
+    from portable_tempdirs import TemporaryDirectoryError as PortableError
 
-    monkeypatch.setattr(codex_bridge_provider, "create_run_directory", deny_workspace)
+    def deny_portable(_namespace):
+        raise PortableError("secret path", code="PERMISSION_DENIED")
+
+    monkeypatch.setattr(temp_directories, "temporary_directory", deny_portable)
     labeler = Labeler(settings=Settings(provider="codex"))
 
     with pytest.raises(ProviderFailure) as raised:
@@ -300,14 +321,13 @@ async def test_temp_workspace_permission_diagnostic_has_no_bridge_attempt(
 
 @pytest.mark.asyncio
 async def test_temp_bridge_state_permission_diagnostic_has_no_bridge_attempt(
-    fake_bridge, monkeypatch, tmp_path
+    fake_bridge, monkeypatch
 ):
     def deny_state(_parent, _name):
         raise TemporaryDirectoryError(
             "PermissionError while creating bridge state", permission_denied=True
         )
 
-    monkeypatch.setattr(codex_bridge_provider, "create_run_directory", lambda: tmp_path)
     monkeypatch.setattr(codex_bridge_provider, "create_run_subdirectory", deny_state)
     labeler = Labeler(settings=Settings(provider="codex"))
 
