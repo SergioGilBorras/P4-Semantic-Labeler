@@ -4,6 +4,7 @@ These use a facade double so CI never invokes paid/external Codex inference.
 """
 from __future__ import annotations
 
+import asyncio
 import builtins
 import inspect
 import types
@@ -117,6 +118,37 @@ async def test_codex_frozen_public_interface_with_accepted_mcp_risk(fake_bridge)
     assert policy.allow_side_effect_mcps
     assert policy.explicit_risk_acknowledgement
     assert kwargs["timeout_seconds"] == 5
+
+
+@pytest.mark.asyncio
+async def test_codex_error_also_cleans_workspace_and_state(fake_bridge):
+    calls, response, _ = fake_bridge
+    response.error = RuntimeError("offline synthetic error")
+    with pytest.raises(ProviderFailure):
+        await Labeler(settings=Settings(provider="codex")).agenerate(
+            LabelRequest(subject=Subject(name="error_case"))
+        )
+    assert [call[0] for call in calls] == ["constructor", "run"]
+    state = calls[0][1]
+    workspace = Path(calls[0][2][0])
+    assert not workspace.exists()
+    assert not state.exists()
+    assert not state.parent.exists()
+
+
+@pytest.mark.asyncio
+async def test_concurrent_requests_use_distinct_cleaned_workspaces(fake_bridge):
+    calls, _, _ = fake_bridge
+    labeler = Labeler(settings=Settings(provider="codex"))
+    request = LabelRequest(subject=Subject(name="parallel"))
+    await asyncio.gather(labeler.agenerate(request), labeler.agenerate(request))
+    states = [call[1] for call in calls if call[0] == "constructor"]
+    workspaces = [Path(call[2]["cwd"]) for call in calls if call[0] == "run"]
+    assert len(states) == len(workspaces) == 2
+    assert states[0] != states[1]
+    assert workspaces[0] != workspaces[1]
+    assert all(not state.parent.exists() for state in states)
+    assert all(not workspace.exists() for workspace in workspaces)
 
 
 @pytest.mark.asyncio
