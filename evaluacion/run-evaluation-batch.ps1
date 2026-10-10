@@ -4,6 +4,7 @@ param(
     [string]$SetName = 'piloto',
     [string]$Batch,
     [string[]]$CaseIds = @(),
+    [string]$PythonExecutable,
     [ValidateRange(1, 10)]
     [int]$Repetitions = 1,
     [ValidateRange(1, 1000)]
@@ -18,7 +19,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$python = Join-Path $projectRoot '.venv\Scripts\python.exe'
+$python = $PythonExecutable
+if ([string]::IsNullOrWhiteSpace($python)) {
+    $python = Join-Path $projectRoot '.venv\Scripts\python.exe'
+}
 $reporter = Join-Path $PSScriptRoot 'summarize-evaluations.ps1'
 $runPattern = '^\d{8}T\d{6}Z_[0-9a-f]{12}$'
 $casePattern = '^[A-Za-z][A-Za-z0-9_-]{1,70}$'
