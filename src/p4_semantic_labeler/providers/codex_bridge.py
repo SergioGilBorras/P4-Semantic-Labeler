@@ -33,8 +33,9 @@ from p4_semantic_labeler.providers.codex_diagnostics import (
     category_for_structured_code,
 )
 from p4_semantic_labeler.temp_directories import (
-    create_run_directory,
+    TemporaryDirectoryError,
     create_run_subdirectory,
+    managed_run_directory,
 )
 from p4_semantic_labeler.providers.base import ProviderPrompt, ProviderResponse
 
@@ -45,10 +46,6 @@ class CodexBridgeProvider:
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
-        self._bridge: Any = None
-        self._workspace: Path | None = None
-        self._bridge_state: Path | None = None
-        self._lock = threading.Lock()
         self._telemetry_lock = threading.Lock()
         self._telemetry = {
             "bridge_calls_attempted": 0,
@@ -145,24 +142,19 @@ class CodexBridgeProvider:
             bridge_error_code=code if isinstance(code, str) else None,
         )
 
-    def _get_bridge(self, module: Any) -> tuple[Any, Path]:
-        with self._lock:
-            if self._bridge is None:
-                run_directory = create_run_directory()
-                if self.settings.codex_workspace is None:
-                    workspace = create_run_subdirectory(run_directory, "workspace")
-                else:
-                    workspace = self.settings.codex_workspace
-                state_dir = create_run_subdirectory(run_directory, "bridge-state")
-                bridge = module.CodexBridge(
-                    state_dir=state_dir,
-                    allowed_roots=[str(workspace)],
-                )
-                self._bridge = bridge
-                self._workspace = workspace
-                self._bridge_state = state_dir
-            assert self._workspace is not None
-            return self._bridge, self._workspace
+    def _new_bridge(self, module: Any, run_directory: Path) -> tuple[Any, Path]:
+        """Create one new CodexBridge and distinct workspace/state per request."""
+        if self.settings.codex_workspace is None:
+            workspace = create_run_subdirectory(run_directory, "workspace")
+        else:
+            # Caller owns external data; it must not be deleted by this adapter.
+            workspace = self.settings.codex_workspace
+        state_dir = create_run_subdirectory(run_directory, "bridge-state")
+        bridge = module.CodexBridge(
+            state_dir=state_dir,
+            allowed_roots=[str(workspace)],
+        )
+        return bridge, workspace
 
     @classmethod
     def _bridge_supports_managed_workspace(cls, module: Any) -> bool:
@@ -199,10 +191,21 @@ class CodexBridgeProvider:
                 CAPABILITY_UNAVAILABLE,
             ) from None
 
+        try:
+            with managed_run_directory() as run_directory:
+                return self._generate_in_run(module, prompt, run_directory)
+        except TemporaryDirectoryError as exc:
+            public_error, category = self._exception_diagnostic(exc, module)
+            raise self._annotate_error(public_error, category) from exc
+
+    def _generate_in_run(
+        self, module: Any, prompt: ProviderPrompt, run_directory: Path
+    ) -> ProviderResponse:
+        """Run a fresh one-shot Codex session inside one owned temporary root."""
         skip_git_repo_check = self.settings.codex_workspace is None
 
         try:
-            bridge, workspace = self._get_bridge(module)
+            bridge, workspace = self._new_bridge(module, run_directory)
             permissions = module.CodexPermissions(
                 module.SandboxMode.READ_ONLY, module.ApprovalPolicy.NEVER
             )

@@ -14,13 +14,15 @@ codex login
 export P4_LABELER_PROVIDER=codex
 ```
 
-The Codex bridge uses that login, not an API key. Managed temporary run directories
-are created by the independently installable `portable-tempdirs` dependency.
-Each run is retained intentionally, with separate `workspace` and `bridge-state`
-children; the library releases its temporary directory owner without deleting
-previous runs. Existing historical run directories are never swept. The
-`P4_LABELER_CODEX_WORKSPACE` override still uses the explicitly configured
-workspace rather than creating a new managed workspace. Use `P4_LABELER_PROVIDER=mock` for tests and demonstrations without real model inference. On Windows, use `$env:NAME = 'value'` to set an environment variable.
+The Codex bridge uses that login, not an API key. The independent
+`portable-tempdirs` dependency creates an **isolated run directory per Codex
+request** with separate `workspace` and `bridge-state` children. Each call
+constructs a new bridge and performs a fresh one-shot invocation, then attempts
+cleanup of that request's run directory. The adapter never uses `detach()` or
+deletes historical run directories. If `P4_LABELER_CODEX_WORKSPACE` explicitly
+points to an external directory, that external workspace is preserved and may
+contain files or instructions from earlier work; only the per-request bridge
+state is temporary. See [Codex setup](docs/codex.md). Use `P4_LABELER_PROVIDER=mock` for tests and demonstrations without real model inference. On Windows, use `$env:NAME = 'value'` to set an environment variable.
 
 ```bash
 python -m venv .venv
@@ -168,7 +170,7 @@ pytest -q
 ruff check .
 ```
 
-CI runs pytest and Ruff on Python 3.11, 3.12 and 3.13. CI uses only mock and bridge contract test doubles, never actual Codex inference. Tests cover core constraints, Unicode, context, prompt boundaries, API, CLI, batching, errors, timeouts and MCP tool handlers. An SDK-level MCP registration test runs when the official MCP extra is installed; it is skipped otherwise.
+CI runs pytest and Ruff on Windows and Ubuntu with Python 3.11, 3.12 and 3.13. CI uses only mock and bridge contract test doubles, never actual Codex inference. Tests cover core constraints, Unicode, context, prompt boundaries, API, CLI, batching, errors, timeouts and MCP tool handlers. An SDK-level MCP registration test runs when the official MCP extra is installed; it is skipped otherwise.
 
 ## Roadmap
 

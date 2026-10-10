@@ -1,21 +1,19 @@
-"""Application-specific compatibility facade for persistent Codex workspaces.
+"""Per-request temporary Codex workspaces backed by portable-tempdirs.
 
-New run roots are created and self-checked by portable-tempdirs. The owner is
-explicitly detached so existing run evidence is retained without leaking
-Windows handles or POSIX descriptors. Historical run directories are untouched.
-Only fixed, caller-authorized child paths use the compatibility mkdir helper.
+The owned run directory is cleaned after each Codex request. Only files created
+inside that run are eligible for deletion; external caller-configured workspaces
+and historical runs are never removed. Cleanup failures remain visible.
 """
 
 from __future__ import annotations
 
 import os
 import stat
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
-from portable_tempdirs import (
-    TemporaryDirectoryError as PortableTemporaryDirectoryError,
-    temporary_directory,
-)
+from portable_tempdirs import temporary_directory
 
 TEMP_ROOT_NAME = "P4-Semantic-Labeler"
 
@@ -28,29 +26,37 @@ class TemporaryDirectoryError(RuntimeError):
         self.permission_denied = permission_denied
 
 
-def create_run_directory() -> Path:
-    """Create a unique, persistent workspace run under the platform temp root.
+def _raise_safe_directory_error(exc: OSError) -> None:
+    denied = (
+        isinstance(exc, PermissionError)
+        or getattr(exc, "code", None) == "PERMISSION_DENIED"
+        or getattr(exc, "diagnostic", {}).get("category") == "PermissionError"
+    )
+    message = (
+        "PermissionError while managing temporary Codex directory"
+        if denied else "Unable to manage temporary Codex directory"
+    )
+    raise TemporaryDirectoryError(message, permission_denied=denied) from None
 
-    No automatic cleanup is performed. The portable-tempdirs owner is detached
-    immediately so the run directory outlives this call without open handles.
+
+@contextmanager
+def managed_run_directory() -> Iterator[Path]:
+    """Create a unique run root and clean it after this request.
+
+    The managed root contains the generated workspace and bridge state. The
+    context manager never detaches ownership or reuses a previous run.
     """
     try:
-        return temporary_directory(TEMP_ROOT_NAME).detach()
-    except PortableTemporaryDirectoryError as exc:
-        denied = exc.code == "PERMISSION_DENIED" or (
-            exc.diagnostic.get("category") == "PermissionError"
-        )
-        message = (
-            "PermissionError while creating managed temporary directory"
-            if denied else "Unable to create managed temporary directory"
-        )
-        raise TemporaryDirectoryError(message, permission_denied=denied) from None
-    except PermissionError:
-        raise TemporaryDirectoryError(
-            "PermissionError while creating managed temporary directory", permission_denied=True
-        ) from None
-    except OSError:
-        raise TemporaryDirectoryError("Unable to create managed temporary directory") from None
+        owner = temporary_directory(TEMP_ROOT_NAME)
+    except OSError as exc:
+        _raise_safe_directory_error(exc)
+    try:
+        with owner as name:
+            yield Path(name)
+    except OSError as exc:
+        # Cleanups are identity-checked by portable-tempdirs. Never attempt a
+        # fallback recursive deletion if a filesystem operation is denied.
+        _raise_safe_directory_error(exc)
 
 
 def _validate_directory(path: Path, description: str) -> None:
