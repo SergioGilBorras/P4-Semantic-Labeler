@@ -37,7 +37,6 @@ def stub_class():
     return StubProvider
 
 
-
 @pytest.fixture
 def portable_tmp_path():
     """Owned, isolated fixture avoiding pytest's global tmp_path machinery."""
