@@ -1,10 +1,13 @@
 # Codex provider
 
-Set `P4_LABELER_PROVIDER=codex` and install P4-Codex-Bridge 1.2.0 from immutable commit `32eb4707a7418c9ef7ed59b22983953337a57bbf` in the labeler's active environment:
+Set `P4_LABELER_PROVIDER=codex` and install the optional integration using the labeler's pip extra from this repository checkout:
 
 ```bash
-python -m pip install "p4-codex-bridge @ git+https://github.com/SergioGilBorras/P4-Codex-Bridge.git@32eb4707a7418c9ef7ed59b22983953337a57bbf"
+python -m pip install -e '.[codex]'
+python -m pip check
 ```
+
+This extra pins P4-Codex-Bridge **1.2.0** to immutable commit `32eb4707a7418c9ef7ed59b22983953337a57bbf`, and the main dependencies pin portable-tempdirs **0.1.1** to `8dfe64c5a60b568cfda1c1fdce0cae4bd6cab275`. The Bridge pins that *same* portable-tempdirs commit, avoiding mismatched source requirements. The newer portable-tempdirs repository tip only changes documentation; it is not needed to obtain 0.1.1. These packages must be installed into the **same interpreter** used by Semantic-Labeler. CI checks their installed metadata and public APIs without invoking Codex CLI.
 
 The bridge remains an optional runtime integration: it is imported only for Codex requests, and the Python library and mock provider do not require it. The adapter requires Bridge 1.2.0 or later because it explicitly supplies `ephemeral=True`.
 
