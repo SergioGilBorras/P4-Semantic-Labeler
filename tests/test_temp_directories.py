@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import os
 import re
-from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -78,8 +77,11 @@ def test_run_creation_does_not_fall_back_to_os_mkdir(monkeypatch):
         raise PortableTemporaryDirectoryError("denied", code="PERMISSION_DENIED")
 
     monkeypatch.setattr(temp_directories, "temporary_directory", refuse)
+    mkdir = Mock(side_effect=AssertionError("fallback mkdir must not run"))
+    monkeypatch.setattr(temp_directories.os, "mkdir", mkdir)
     with pytest.raises(TemporaryDirectoryError):
         create_run_directory()
+    mkdir.assert_not_called()
 
 
 def test_named_children_are_unique_and_workspace_and_state_remain_separate(portable_tmp_path):
