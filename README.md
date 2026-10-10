@@ -9,7 +9,7 @@
 Python 3.11+. Install the service and the optional Codex bridge in the same environment. For actual AI generation, authenticate the official Codex CLI:
 
 ```bash
-python -m pip install 'git+https://github.com/SergioGilBorras/P4-Codex-Bridge.git'
+python -m pip install "p4-codex-bridge @ git+https://github.com/SergioGilBorras/P4-Codex-Bridge.git@32eb4707a7418c9ef7ed59b22983953337a57bbf"
 codex login
 export P4_LABELER_PROVIDER=codex
 ```
@@ -122,7 +122,7 @@ All settings are environment variables. Defaults are intended for local use.
 
 | Variable | Default | Meaning |
 |---|---:|---|
-| `P4_LABELER_PROVIDER` | `disabled` | `disabled`, `mock`, or `codex` (requires optional P4-Codex-Bridge 1.1.0 or later; see [Codex setup](docs/codex.md)) |
+| `P4_LABELER_PROVIDER` | `disabled` | `disabled`, `mock`, or `codex` (requires optional P4-Codex-Bridge 1.2.0 or later; see [Codex setup](docs/codex.md)) |
 | `P4_LABELER_CODEX_WORKSPACE` | managed temporary workspace | Existing absolute Codex working directory, if explicitly configured |
 | `P4_LABELER_MIN_CHARS` | `1` | Min length requested |
 | `P4_LABELER_MAX_CHARS` | `300` | Max length requested |
