@@ -139,15 +139,15 @@ async def test_codex_authentication_error(fake_bridge):
 
 
 @pytest.mark.asyncio
-async def test_codex_uses_configured_existing_workspace(fake_bridge, tmp_path):
+async def test_codex_uses_configured_existing_workspace(fake_bridge, portable_tmp_path):
     calls, _, _ = fake_bridge
-    config = Settings(provider="codex", codex_workspace=tmp_path)
+    config = Settings(provider="codex", codex_workspace=portable_tmp_path)
     await Labeler(settings=config).agenerate(LabelRequest(subject=Subject(name="example")))
     assert calls[0][0] == "constructor"
-    assert calls[0][2] == [str(tmp_path)]
+    assert calls[0][2] == [str(portable_tmp_path)]
     assert calls[0][1].name == "bridge-state"
     assert calls[0][1].is_dir()
-    assert tmp_path not in calls[0][1].parents
+    assert portable_tmp_path not in calls[0][1].parents
     assert calls[1][2]["skip_git_repo_check"] is False
 
 
