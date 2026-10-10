@@ -27,8 +27,8 @@ def test_input_isolation_and_rubrics():
         assert rubric["case_id"] == cid
 
 
-def test_dry_run_without_provider(monkeypatch, tmp_path):
-    monkeypatch.setattr(lab, "OUTPUT", tmp_path)
+def test_dry_run_without_provider(monkeypatch, portable_tmp_path):
+    monkeypatch.setattr(lab, "OUTPUT", portable_tmp_path)
     manifest, directory = lab.make_run("piloto", None, "prepare", 1, 60, 60, 120, False, False)
     assert manifest["model_invoked"] is False
     assert manifest["observed_calls"] == 0
@@ -37,8 +37,8 @@ def test_dry_run_without_provider(monkeypatch, tmp_path):
     assert not (directory / "results.json").exists()
 
 
-def test_individual_case_prepare_preserves_input_and_excludes_rubric(monkeypatch, tmp_path):
-    monkeypatch.setattr(lab, "OUTPUT", tmp_path)
+def test_individual_case_prepare_preserves_input_and_excludes_rubric(monkeypatch, portable_tmp_path):
+    monkeypatch.setattr(lab, "OUTPUT", portable_tmp_path)
     result, directory = lab.make_run(
         "piloto", None, "prepare", 1, 1, 1, 120, False, False, case_id="SL-0001"
     )
@@ -75,23 +75,23 @@ def test_individual_case_budget_respects_repetitions_before_run_creation(monkeyp
         )
 
 
-def test_real_inference_requires_explicit_consent(monkeypatch, tmp_path):
-    monkeypatch.setattr(lab, "OUTPUT", tmp_path)
+def test_real_inference_requires_explicit_consent(monkeypatch, portable_tmp_path):
+    monkeypatch.setattr(lab, "OUTPUT", portable_tmp_path)
     with pytest.raises(ValueError):
         lab.make_run("piloto", None, "run", 1, 60, 60, 120, True, False)
-    assert list(tmp_path.iterdir()) == []
+    assert list(portable_tmp_path.iterdir()) == []
 
 
-def test_no_model_captured_in_preparation(tmp_path, monkeypatch):
-    monkeypatch.setattr(lab, "OUTPUT", tmp_path)
+def test_no_model_captured_in_preparation(portable_tmp_path, monkeypatch):
+    monkeypatch.setattr(lab, "OUTPUT", portable_tmp_path)
     result, _ = lab.make_run("acumulada", None, "prepare", 1, 60, 60, 120, False, False)
     assert result["cases"][0] == "SL-0001"
     assert len(result["cases"]) == 60
     assert result["model_invoked"] is False
 
 
-def test_mock_run_records_response_without_confirming_real_inference(tmp_path, monkeypatch):
-    monkeypatch.setattr(lab, "OUTPUT", tmp_path)
+def test_mock_run_records_response_without_confirming_real_inference(portable_tmp_path, monkeypatch):
+    monkeypatch.setattr(lab, "OUTPUT", portable_tmp_path)
     manifest, directory = lab.make_run(
         "piloto", None, "run", 1, 1, 1, 120, False, False, case_id="SL-0001"
     )
@@ -138,3 +138,15 @@ def test_module_entrypoint():
     )
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout)["initial_cases"] == 60
+
+
+def test_new_lab_run_directory_accepts_manifest_writes(monkeypatch, portable_tmp_path):
+    """Nested lab runs must be writable on Windows and POSIX."""
+    monkeypatch.setattr(lab, "OUTPUT", portable_tmp_path)
+    manifest, directory = lab.make_run(
+        "piloto", None, "prepare", 1, 1, 1, 120, False, False, case_id="SL-0001"
+    )
+    assert directory.parent == portable_tmp_path
+    saved = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
+    assert saved["run_id"] == directory.name == manifest["run_id"]
+    assert saved["status"] == "COMPLETED"

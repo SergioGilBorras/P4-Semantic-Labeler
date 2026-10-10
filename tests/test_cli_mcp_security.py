@@ -22,8 +22,8 @@ def run_cli(*args, input=None):
     )
 
 
-def test_cli_label_file_json(tmp_path):
-    filename = tmp_path / "demo.py"
+def test_cli_label_file_json(portable_tmp_path):
+    filename = portable_tmp_path / "demo.py"
     filename.write_text("def get_users():\n  return []\n", encoding="utf-8")
     result = run_cli("label", "--name", "get_users", "--kind", "function",
                      "--file", str(filename), "--max-chars", "20", "--json")
@@ -52,9 +52,9 @@ def test_cli_bad_input_no_secret_leak():
     assert "SECRET" not in result.stderr
 
 
-def test_file_security_multiplatform(tmp_path):
-    allowed = tmp_path / "allowed"
-    denied = tmp_path / "denied"
+def test_file_security_multiplatform(portable_tmp_path):
+    allowed = portable_tmp_path / "allowed"
+    denied = portable_tmp_path / "denied"
     allowed.mkdir()
     denied.mkdir()
     filename = allowed / "safe.md"
@@ -77,9 +77,9 @@ def test_file_security_multiplatform(tmp_path):
     sys.platform != "linux",
     reason="La prueba de symlinks se ejecuta exclusivamente en Linux",
 )
-def test_file_security_rejects_symlink_to_external_file(tmp_path):
-    allowed = tmp_path / "allowed"
-    denied = tmp_path / "denied"
+def test_file_security_rejects_symlink_to_external_file(portable_tmp_path):
+    allowed = portable_tmp_path / "allowed"
+    denied = portable_tmp_path / "denied"
     allowed.mkdir()
     denied.mkdir()
     forbidden = denied / "secret.md"
@@ -93,10 +93,10 @@ def test_file_security_rejects_symlink_to_external_file(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_mcp_handler_tools_and_roots(settings, tmp_path):
-    f = tmp_path / "doc.txt"
+async def test_mcp_handler_tools_and_roots(settings, portable_tmp_path):
+    f = portable_tmp_path / "doc.txt"
     f.write_text("Documentation example", encoding="utf-8")
-    cfg = Settings(provider="mock", mcp_roots=(tmp_path,))
+    cfg = Settings(provider="mock", mcp_roots=(portable_tmp_path,))
     handler = MCPTools(Labeler(settings=cfg), cfg)
     for result in (
         await handler.generate_label("foo_bar"),
@@ -120,7 +120,7 @@ async def test_official_mcp_registration_if_installed(settings):
     assert set(names) == {"generate_label", "generate_summary", "generate_labels_batch", "summarize_file"}
 
 
-def test_mcp_missing_file_sanitized(tmp_path):
-    settings = Settings(provider="mock", mcp_roots=(tmp_path,))
+def test_mcp_missing_file_sanitized(portable_tmp_path):
+    settings = Settings(provider="mock", mcp_roots=(portable_tmp_path,))
     with pytest.raises(RequestValueError):
-        read_authorized_file(str(tmp_path / "no-file.txt"), settings)
+        read_authorized_file(str(portable_tmp_path / "no-file.txt"), settings)

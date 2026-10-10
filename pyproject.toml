@@ -37,6 +37,8 @@ where = ["src"]
 testpaths = ["tests", "evaluacion/tests"]
 pythonpath = ["."]
 asyncio_mode = "auto"
+# The pytest cache is unrelated to portable-tempdirs and can be denied on Windows.
+addopts = "-p no:cacheprovider"
 filterwarnings = [
     "error:Using `httpx` with `starlette.testclient` is deprecated:starlette.exceptions.StarletteDeprecationWarning",
 ]
