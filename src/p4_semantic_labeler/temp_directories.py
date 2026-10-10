@@ -1,39 +1,56 @@
-"""Create unique, persistent temporary workspaces without changing permissions."""
+"""Application-specific compatibility facade for persistent Codex workspaces.
+
+New run roots are created and self-checked by portable-tempdirs. The owner is
+explicitly detached so existing run evidence is retained without leaking
+Windows handles or POSIX descriptors. Historical run directories are untouched.
+Only fixed, caller-authorized child paths use the compatibility mkdir helper.
+"""
 
 from __future__ import annotations
 
 import os
-import re
-import secrets
 import stat
-import tempfile
-from collections.abc import Mapping
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable
 
-TEMP_ROOT_NAME = "P4-Planning-Agent"
-RUN_ID_PATTERN = re.compile(r"^\d{8}T\d{6}Z-[0-9a-f]{8}$")
-MAX_COLLISION_ATTEMPTS = 100
+from portable_tempdirs import (
+    TemporaryDirectoryError as PortableTemporaryDirectoryError,
+    temporary_directory,
+)
+
+TEMP_ROOT_NAME = "P4-Semantic-Labeler"
 
 
 class TemporaryDirectoryError(RuntimeError):
-    """A safe diagnostic for a failure to create a managed temporary directory."""
+    """Sanitized workspace error preserving the provider's legacy diagnostic flag."""
 
     def __init__(self, message: str, *, permission_denied: bool = False) -> None:
         super().__init__(message)
         self.permission_denied = permission_denied
 
 
-def _system_temp_root(system_name: str, environ: Mapping[str, str]) -> Path:
-    if system_name == "nt":
-        configured_root = environ.get("TEMP")
-        if not configured_root:
-            raise TemporaryDirectoryError("TEMP is not configured")
-        return Path(configured_root)
+def create_run_directory() -> Path:
+    """Create a unique, persistent workspace run under the platform temp root.
 
-    configured_root = environ.get("TMPDIR")
-    return Path(configured_root) if configured_root else Path(tempfile.gettempdir())
+    No automatic cleanup is performed. The portable-tempdirs owner is detached
+    immediately so the run directory outlives this call without open handles.
+    """
+    try:
+        return temporary_directory(TEMP_ROOT_NAME).detach()
+    except PortableTemporaryDirectoryError as exc:
+        denied = exc.code == "PERMISSION_DENIED" or (
+            exc.diagnostic.get("category") == "PermissionError"
+        )
+        message = (
+            "PermissionError while creating managed temporary directory"
+            if denied else "Unable to create managed temporary directory"
+        )
+        raise TemporaryDirectoryError(message, permission_denied=denied) from None
+    except PermissionError:
+        raise TemporaryDirectoryError(
+            "PermissionError while creating managed temporary directory", permission_denied=True
+        ) from None
+    except OSError:
+        raise TemporaryDirectoryError("Unable to create managed temporary directory") from None
 
 
 def _validate_directory(path: Path, description: str) -> None:
@@ -51,69 +68,9 @@ def _validate_directory(path: Path, description: str) -> None:
         raise TemporaryDirectoryError(f"{description} is not a directory")
 
 
-def create_run_directory(
-    *,
-    environ: Mapping[str, str] | None = None,
-    system_name: str | None = None,
-    now: Callable[[], datetime] | None = None,
-    token_hex: Callable[[int], str] | None = None,
-) -> Path:
-    """Create and return a unique directory under the platform temporary root.
-
-    Directories are intentionally not deleted or reused. Each level is created
-    with a single atomic ``os.mkdir`` operation, and collisions retry with a
-    fresh random component.
-    """
-    environment = os.environ if environ is None else environ
-    platform_name = os.name if system_name is None else system_name
-    root = _system_temp_root(platform_name, environment)
-    _validate_directory(root, "configured temporary root")
-
-    managed_root = root / TEMP_ROOT_NAME
-    try:
-        os.mkdir(managed_root)
-    except FileExistsError:
-        _validate_directory(managed_root, "managed temporary root")
-    except PermissionError:
-        raise TemporaryDirectoryError(
-            "PermissionError while creating managed temporary root", permission_denied=True
-        ) from None
-    except OSError:
-        raise TemporaryDirectoryError(
-            "Unable to create managed temporary root"
-        ) from None
-
-    clock = now or (lambda: datetime.now(timezone.utc))
-    random_hex = token_hex or secrets.token_hex
-    for _ in range(MAX_COLLISION_ATTEMPTS):
-        timestamp = clock()
-        if timestamp.tzinfo is None or timestamp.utcoffset() is None:
-            raise ValueError("Temporary directory clock must return a timezone-aware datetime")
-        run_id = f"{timestamp.astimezone(timezone.utc):%Y%m%dT%H%M%SZ}-{random_hex(4)}"
-        if not RUN_ID_PATTERN.fullmatch(run_id):
-            raise ValueError("Temporary directory identifier is invalid")
-        destination = managed_root / run_id
-        try:
-            os.mkdir(destination)
-            return destination
-        except FileExistsError:
-            continue
-        except PermissionError:
-            raise TemporaryDirectoryError(
-                "PermissionError while creating temporary run directory",
-                permission_denied=True,
-            ) from None
-        except OSError:
-            raise TemporaryDirectoryError(
-                "Unable to create temporary run directory"
-            ) from None
-
-    raise TemporaryDirectoryError("Unable to allocate a unique temporary run directory")
-
-
 def create_run_subdirectory(parent: Path, name: str) -> Path:
     """Create one named child directory without reusing an existing child."""
-    if not name or name in {".", ".."} or Path(name).name != name:
+    if not isinstance(name, str) or not name or name in {".", ".."} or "/" in name or "\\\\" in name or Path(name).name != name:
         raise ValueError("Temporary subdirectory name must be a single path component")
     _validate_directory(parent, "temporary run directory")
     destination = parent / name
