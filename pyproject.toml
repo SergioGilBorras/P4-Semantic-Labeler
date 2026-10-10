@@ -15,14 +15,14 @@ dependencies = [
     "pydantic>=2,<3",
     "uvicorn>=0.27,<1",
     "python-multipart>=0.0.9",
-    # Pin the validated standalone library until its first release is published.
-    "portable-tempdirs @ git+https://github.com/SergioGilBorras/portable-tempdirs.git@8dfe64c5a60b568cfda1c1fdce0cae4bd6cab275",
+    # Pin the validated standalone library from its reviewed 0.1.2 main commit until a PyPI release is adopted.
+    "portable-tempdirs @ git+https://github.com/SergioGilBorras/portable-tempdirs.git@fd6dbd640630e6911a53b4d756089099ec870a8b",
 ]
 
 [project.optional-dependencies]
-# Opt-in Codex bridge is tied to a reviewed 1.2.0 commit. It depends on the
-# same immutable portable-tempdirs 0.1.1 commit as the core application.
-codex = ["p4-codex-bridge @ git+https://github.com/SergioGilBorras/P4-Codex-Bridge.git@32eb4707a7418c9ef7ed59b22983953337a57bbf"]
+# Opt-in Codex bridge is tied to a current 1.2.0 main commit. It depends on the
+# same immutable portable-tempdirs 0.1.2 commit as the core application.
+codex = ["p4-codex-bridge @ git+https://github.com/SergioGilBorras/P4-Codex-Bridge.git@082705a0fb797d80d1010c6ead9b5dd2b3e69da4"]
 mcp = ["mcp>=1.0,<2"]
 dev = ["pytest>=8", "pytest-asyncio>=0.23", "httpx2>=2.4,<3", "ruff>=0.8", "mcp>=1.0,<2", "PyYAML>=6,<7"]
 

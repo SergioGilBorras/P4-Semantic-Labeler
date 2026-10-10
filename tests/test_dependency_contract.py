@@ -12,7 +12,7 @@ from portable_tempdirs import TemporaryDirectory, temporary_directory
 
 
 def test_portable_tempdirs_install_and_one_shot_cleanup():
-    assert version("portable-tempdirs") == "0.1.1"
+    assert version("portable-tempdirs") == "0.1.2"
     assert callable(getattr(TemporaryDirectory, "detach", None))
 
     with temporary_directory("SemanticDependencyContract") as path:
