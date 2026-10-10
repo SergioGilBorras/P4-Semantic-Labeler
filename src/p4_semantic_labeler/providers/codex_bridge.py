@@ -42,7 +42,7 @@ from p4_semantic_labeler.providers.base import ProviderPrompt, ProviderResponse
 
 class CodexBridgeProvider:
     name = "codex"
-    MINIMUM_BRIDGE_VERSION = (1, 1, 0)
+    MINIMUM_BRIDGE_VERSION = (1, 2, 0)
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings

@@ -1,6 +1,12 @@
 # Codex provider
 
-Set `P4_LABELER_PROVIDER=codex` and install [P4-Codex-Bridge](https://github.com/SergioGilBorras/P4-Codex-Bridge) version **1.1.0 or later** with a supported installed, authenticated official Codex CLI. Install from the merged `main` checkout. For a fresh checkout, run `git clone https://github.com/SergioGilBorras/P4-Codex-Bridge.git`, then `python -m pip install -e ./P4-Codex-Bridge` in the labeler's active environment. For an existing checkout, update it with `git switch main` and `git pull --ff-only origin main` before installing. The bridge is an optional runtime integration: it is imported only for Codex requests, and the Python library and mock provider do not require it.
+Set `P4_LABELER_PROVIDER=codex` and install P4-Codex-Bridge 1.2.0 from immutable commit `32eb4707a7418c9ef7ed59b22983953337a57bbf` in the labeler's active environment:
+
+```bash
+python -m pip install "p4-codex-bridge @ git+https://github.com/SergioGilBorras/P4-Codex-Bridge.git@32eb4707a7418c9ef7ed59b22983953337a57bbf"
+```
+
+The bridge remains an optional runtime integration: it is imported only for Codex requests, and the Python library and mock provider do not require it. The adapter requires Bridge 1.2.0 or later because it explicitly supplies `ephemeral=True`.
 
 `cwd` is the working directory in which the Codex CLI process runs; it does not specify the bridge's state storage. **Every provider request creates a new `CodexBridge` instance and invokes a fresh, one-shot `CodexBridge.run()` execution.** No bridge instance, thread or managed filesystem workspace is reused for a later label request, including retries and concurrent batch items.
 
@@ -8,7 +14,7 @@ For each request, the adapter uses `portable-tempdirs` as a context manager to c
 
 If `P4_LABELER_CODEX_WORKSPACE` names an existing external directory, each request still gets a fresh `CodexBridge` and a new temporary `bridge-state`, but the *external directory is reused by explicit configuration*. The adapter never deletes or clears that directory, uses `skip_git_repo_check=False`, and cannot guarantee that external files, repository instructions or `AGENTS.md` will not affect later requests. For maximum filesystem-context separation, leave this setting unset.
 
-The adapter sets `profile="analysis"`, `config_policy="isolated"`, `capture_last_message=True`, `SandboxMode.READ_ONLY` and `ApprovalPolicy.NEVER`. It passes a combined instruction and JSON reference-data prompt, because `run()` accepts one prompt string rather than separate system/user roles. It consumes the final `RunResult.content` and rejects unsuccessful/empty results. A missing `skip_git_repo_check` capability or a bridge version older than 1.1.0 produces a safe capability diagnostic before a provider call.
+The adapter sets `profile="analysis"`, `config_policy="isolated"`, `capture_last_message=True`, `SandboxMode.READ_ONLY`, `ApprovalPolicy.NEVER` and `ephemeral=True`. It passes a combined instruction and JSON reference-data prompt, because `run()` accepts one prompt string rather than separate system/user roles. It consumes the final `RunResult.content` and rejects unsuccessful/empty results. A missing `skip_git_repo_check` capability or a bridge version older than 1.2.0 produces a safe capability diagnostic before a provider call.
 
 In either mode, `allowed_roots` contains only the selected workspace; bridge state is never included. Protect an external workspace and avoid untrusted Codex configuration or `AGENTS.md` there. Input source code is included as **prompt text**, never written to the working directory or executed by this service.
 

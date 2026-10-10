@@ -38,7 +38,7 @@ from p4_semantic_labeler.temp_directories import TemporaryDirectoryError
 @pytest.fixture
 def fake_bridge(monkeypatch):
     module = types.ModuleType("p4_codex_bridge")
-    module.__version__ = "1.1.0"
+    module.__version__ = "1.2.0"
     module.SandboxMode = SimpleNamespace(READ_ONLY="read-only")
     module.ApprovalPolicy = SimpleNamespace(NEVER="never")
     module.ProjectTrust = SimpleNamespace(TRUSTED="TRUSTED")
@@ -395,10 +395,25 @@ async def test_old_bridge_version_is_rejected_as_capability_unavailable(fake_bri
     }
 
 
+@pytest.mark.asyncio
+async def test_bridge_1_1_is_rejected_before_ephemeral_call(fake_bridge):
+    calls, _, module = fake_bridge
+    module.__version__ = "1.1.0"
+    labeler = Labeler(settings=Settings(provider="codex"))
+
+    with pytest.raises(ProviderUnavailable) as raised:
+        await labeler.agenerate(LabelRequest(subject=Subject(name="example")))
+
+    assert raised.value.diagnostic_category == CAPABILITY_UNAVAILABLE
+    assert calls == []
+    assert labeler.provider.telemetry_snapshot()["bridge_calls_attempted"] == 0
+
+
 def test_installed_bridge_api_supports_skip_git_repo_check():
     bridge = pytest.importorskip("p4_codex_bridge")
     assert codex_bridge_provider.CodexBridgeProvider._bridge_supports_managed_workspace(bridge)
     assert "skip_git_repo_check" in inspect.signature(bridge.CodexBridge.run).parameters
+    assert inspect.signature(bridge.CodexBridge.run).parameters["ephemeral"].default is True
 
 
 @pytest.mark.asyncio
