@@ -12,6 +12,14 @@ jobs:
         python-version: ['3.11', '3.12', '3.13']
     steps:
       - uses: actions/checkout@v4
+      - name: Offline summary regressions (Windows PowerShell 5.1)
+        if: runner.os == 'Windows' && matrix.python-version == '3.11'
+        shell: powershell
+        run: .\evaluacion\tests\test-summarize-evaluations.ps1
+      - name: Offline summary regressions (PowerShell 7)
+        if: runner.os == 'Windows' && matrix.python-version == '3.11'
+        shell: pwsh
+        run: .\evaluacion\tests\test-summarize-evaluations.ps1
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
