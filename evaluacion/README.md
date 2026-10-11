@@ -99,6 +99,29 @@ fidelity, completeness, critical failures, and truncation rate against the
 unchanged per-case rubric. Retain all baseline and experiment run directories
 until after comparison; do not run cleanup with `-Apply` on that evidence.
 
+## Preferred minimum length and positive descriptions
+
+Each label request may specify `min_chars` (default `1`), with
+`1 <= min_chars <= max_chars`. The minimum is **advisory**: a complete,
+faithful label shorter than the preference is still `COMPLETED`, without
+automatic padding, rejection, or additional Codex calls. The service only
+adds `below_preferred_min_chars` to its warnings. The shareable report
+exports a safe per-result `below_preferred_min_chars` boolean and the total
+`results_below_preferred_minimum` separately from failures and semantic
+review flags. The maximum remains a hard limit with the same explicitly
+budgeted shortening retries.
+
+The prompt favors a direct description of what a subject **does or is**,
+rather than negative comparisons to what it does not do (e.g. a median
+computation should be named directly instead of describing it as "not mean").
+Genuine prohibitions, negation and necessary conditions must still be
+preserved; review them against the independent rubric.
+
+The original 60-case evaluation inputs and rubrics remain frozen: they
+implicitly use `min_chars=1`. To test a meaningful advisory minimum,
+create a new versioned batch of inputs with explicit `min_chars`, rather than
+editing the baseline or claiming historical runs used a new constraint.
+
 ## Retention and cleanup
 
 Edit **`evaluacion/evaluation-retention.json`** and add or remove exact `run_id` values in `keep_run_ids`. They must match the directory names under `evaluacion/salida/`. The checked-in file initially protects the known successful real pilots and a diagnostic failure from 2026-10-10. This JSON is a user-maintained policy; review changes before committing because your local run IDs may differ.

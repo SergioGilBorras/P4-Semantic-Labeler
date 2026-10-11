@@ -28,6 +28,7 @@ class PromptBuilder:
             output_type=request.output_type,
             style=request.style,
             language=request.language,
+            min_chars=request.min_chars,
             max_chars=request.max_chars,
         )
         data: dict[str, object] = {"reference_data": context.fields}

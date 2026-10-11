@@ -24,6 +24,30 @@ def test_http_contract_health_openapi(settings):
         assert "/v1/labels/file" in schema["paths"]
 
 
+def test_http_optional_minimum_is_advisory_for_json_and_multipart(settings):
+    with TestClient(create_app(settings=settings)) as client:
+        request = payload()
+        request["min_chars"] = 20
+        response = client.post("/v1/labels", json=request)
+        assert response.status_code == 200
+        assert response.json()["label"] == "calculate total"
+        assert "below_preferred_min_chars" in response.json()["warnings"]
+
+        file_response = client.post(
+            "/v1/labels/file",
+            data={"name": "tiny", "min_chars": "20", "max_chars": "30"},
+            files={"file": ("note.md", b"One idea.", "text/markdown")},
+        )
+        assert file_response.status_code == 200
+        assert file_response.json()["label"] == "tiny"
+        assert "below_preferred_min_chars" in file_response.json()["warnings"]
+
+        request["min_chars"] = 21
+        request["max_chars"] = 20
+        invalid = client.post("/v1/labels", json=request)
+        assert invalid.status_code == 422
+
+
 def test_http_validation_not_leaking_input(settings):
     with TestClient(create_app(settings=settings)) as client:
         response = client.post("/v1/labels", json={"subject": {"name": "PRIVATE", "oops": "SECRETDATA"}})

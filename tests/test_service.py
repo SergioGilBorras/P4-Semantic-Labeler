@@ -82,6 +82,47 @@ async def test_prompt_requires_complete_label_without_extra_calls(settings, stub
     assert "Cache must be refreshed before reading." not in prompt.system
 
 
+def test_preferred_minimum_is_opt_in_and_must_fit_under_maximum():
+    assert request().min_chars == 1  # Legacy requests stay unchanged.
+    assert request(min_chars=20, max_chars=35).min_chars == 20
+    with pytest.raises(ValidationError, match="min_chars must not exceed max_chars"):
+        request(min_chars=36, max_chars=35)
+    with pytest.raises(ValidationError):
+        request(min_chars=0)
+
+
+@pytest.mark.asyncio
+async def test_preferred_minimum_is_nonblocking_and_never_adds_model_calls(settings, stub_class):
+    stub = stub_class("Calculate median")
+    result = await Labeler(stub, settings).agenerate(request(
+        subject=Subject(kind="function", name="calculate_median"),
+        context=Context(documentation="Computes the median of numeric values, not their mean."),
+        language="en", min_chars=20, max_chars=26,
+    ))
+    assert result.label == "Calculate median"
+    assert result.char_count == 16
+    assert result.warnings == ["below_preferred_min_chars"]
+    assert len(stub.prompts) == 1  # No rewrite just to fill the preferred length.
+    assert "PREFERRED MINIMUM: 20 characters" in stub.prompts[0].system
+    assert "this is advisory" in stub.prompts[0].system
+    assert "at most 26 Unicode characters" in stub.prompts[0].system
+    assert "Describe what the subject IS or DOES" in stub.prompts[0].system
+    assert "Preserve real prohibitions, negation and conditions" in stub.prompts[0].system
+    assert "not their mean" in stub.prompts[0].user
+    assert "not their mean" not in stub.prompts[0].system
+
+
+@pytest.mark.asyncio
+async def test_preferred_minimum_only_warns_when_needed(settings, stub_class):
+    stub = stub_class("Compute median of numbers")
+    result = await Labeler(stub, settings).agenerate(request(
+        language="en", min_chars=20, max_chars=26,
+    ))
+    assert result.char_count == 25
+    assert "below_preferred_min_chars" not in result.warnings
+    assert len(stub.prompts) == 1
+
+
 @pytest.mark.asyncio
 async def test_no_context_warning(settings, stub_class):
     result = await Labeler(stub_class("A label"), settings).agenerate(request(context=None))

@@ -70,6 +70,11 @@ class Labeler:
         if len(label) > request.max_chars:
             label = truncate_label(label, request.max_chars)
             warnings.append("output_truncated: meaning may be incomplete")
+        # The minimum is a preference only: do not pad, reject, or retry
+        # an accurate short answer. Additional model calls remain reserved
+        # exclusively for overlength output.
+        if len(label) < request.min_chars:
+            warnings.append("below_preferred_min_chars")
         return LabelResult(
             label=label,
             char_count=len(label),

@@ -43,6 +43,7 @@ $itemCount = 0
 $successCount = 0
 $errorCount = 0
 $reviewCount = 0
+$belowPreferredMinCount = 0
 
 foreach ($directory in @(Get-ChildItem -LiteralPath $root.FullName -Directory -Force | Sort-Object Name)) {
     if ($directory.Name -cnotmatch $runPattern) {
@@ -102,6 +103,7 @@ foreach ($directory in @(Get-ChildItem -LiteralPath $root.FullName -Directory -F
             $charCount = $null
             $provider = $null
             $needsSemanticReview = $false
+            $belowPreferredMin = $false
             if ($null -ne $item.raw_output) {
                 $label = $item.raw_output.label
                 $charCount = $item.raw_output.char_count
@@ -112,7 +114,9 @@ foreach ($directory in @(Get-ChildItem -LiteralPath $root.FullName -Directory -F
                     if ($warning -is [string] -and
                         $warning.StartsWith('output_truncated:', [System.StringComparison]::Ordinal)) {
                         $needsSemanticReview = $true
-                        break
+                    }
+                    if ($warning -is [string] -and $warning -ceq 'below_preferred_min_chars') {
+                        $belowPreferredMin = $true
                     }
                 }
             }
@@ -124,6 +128,7 @@ foreach ($directory in @(Get-ChildItem -LiteralPath $root.FullName -Directory -F
                 char_count = $charCount
                 provider = $provider
                 needs_semantic_review = $needsSemanticReview
+                below_preferred_min_chars = $belowPreferredMin
                 diagnostic_category = $item.diagnostic_category
                 provider_error_code = $item.provider_error_code
                 objective_checks = $item.objective_checks
@@ -144,6 +149,9 @@ foreach ($directory in @(Get-ChildItem -LiteralPath $root.FullName -Directory -F
             }
             if ($row.needs_semantic_review) {
                 $reviewCount++
+            }
+            if ($row.below_preferred_min_chars) {
+                $belowPreferredMinCount++
             }
         }
         $runs.Add([pscustomobject]@{
@@ -178,6 +186,7 @@ $report = [ordered]@{
         completed_results = $successCount
         other_results = $errorCount
         results_requiring_review = $reviewCount
+        results_below_preferred_minimum = $belowPreferredMinCount
         skipped_directories = $skipped.Count
     }
     runs = @($runs.ToArray())

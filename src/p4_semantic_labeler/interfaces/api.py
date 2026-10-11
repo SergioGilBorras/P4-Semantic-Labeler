@@ -149,6 +149,7 @@ def create_app(labeler: Labeler | None = None, settings: Settings | None = None)
         name: str = Form(...),
         kind: str = Form("document"),
         output_type: str = Form("summary"),
+        min_chars: int = Form(1),
         max_chars: int = Form(160),
         style: str = Form("neutral"),
         language: str = Form("es"),
@@ -170,7 +171,8 @@ def create_app(labeler: Labeler | None = None, settings: Settings | None = None)
             context = Context(**fields)
             label_request = LabelRequest(
                 subject=Subject(kind=kind, name=name), context=context,
-                output_type=output_type, max_chars=max_chars, style=style, language=language,
+                output_type=output_type, min_chars=min_chars,
+                max_chars=max_chars, style=style, language=language,
             )
         except ValidationError as exc:
             raise RequestValueError() from exc

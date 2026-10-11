@@ -22,11 +22,13 @@ class MCPTools:
         max_chars: int = 80,
         style: str = "neutral",
         language: str = "es",
+        min_chars: int = 1,
     ) -> dict:
         req = LabelRequest(
             subject=Subject(name=name, kind=kind),
             context=Context(documentation=documentation, source_code=source_code),
-            output_type="title", max_chars=max_chars, style=style, language=language,
+            output_type="title", min_chars=min_chars,
+            max_chars=max_chars, style=style, language=language,
         )
         return (await self.labeler.agenerate(req)).model_dump()
 
@@ -37,11 +39,12 @@ class MCPTools:
         max_chars: int = 160,
         style: str = "neutral",
         language: str = "es",
+        min_chars: int = 1,
     ) -> dict:
         req = LabelRequest(
             subject=Subject(name=name, kind="document"),
             context=Context(text=text), output_type="summary",
-            max_chars=max_chars, style=style, language=language,
+            min_chars=min_chars, max_chars=max_chars, style=style, language=language,
         )
         return (await self.labeler.agenerate(req)).model_dump()
 
@@ -56,11 +59,13 @@ class MCPTools:
         max_chars: int = 160,
         style: str = "neutral",
         language: str = "es",
+        min_chars: int = 1,
     ) -> dict:
         filename, data = read_authorized_file(path, self.settings)
         context = Context(**({"source_code": data} if filename.endswith(".py") else {"text": data}))
         req = LabelRequest(
             subject=Subject(kind="document", name=name), context=context,
-            output_type="summary", max_chars=max_chars, style=style, language=language,
+            output_type="summary", min_chars=min_chars,
+            max_chars=max_chars, style=style, language=language,
         )
         return (await self.labeler.agenerate(req)).model_dump()

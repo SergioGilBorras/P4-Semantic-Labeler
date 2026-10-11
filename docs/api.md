@@ -16,11 +16,19 @@ Base path: `/v1`. JSON UTF-8, except file upload which is `multipart/form-data`.
     "text": null, "before": null, "after": null, "purpose": "navigation",
     "title": null, "document_type": null
   },
-  "output_type": "title", "max_chars": 35, "style": "technical", "language": "en"
+  "output_type": "title", "min_chars": 15, "max_chars": 35, "style": "technical", "language": "en"
 }
 ```
 
 Only `subject.name` is required. The other fields have defaults. `subject.kind` is a generic identifier (e.g. `function`, `method`, `class`, `document`, `concept`) with no domain-dependent behavior. The extensible `style` is a slug, not a fixed finite enum. `language` is validated against the syntax of a BCP 47 language tag (not the full registry of valid codes). `output_type` is `title` or `summary`. Configurable per-service character limits default to 1–300 inclusive, and the model also enforces an absolute validation cap of 10,000.
+
+The optional per-request `min_chars` (default `1`) is a **preferred** lower bound,
+not a mandatory response length. It must be between 1 and `max_chars`.
+A shorter meaningful label succeeds unchanged with warning
+`below_preferred_min_chars`; it does not trigger a rewrite or failure.
+`max_chars` remains a hard upper bound. The instructions favor what
+a function does over contrastive titles such as "Calculate median, not mean",
+but preserve negations that define actual behavior.
 
 Response:
 
@@ -56,7 +64,7 @@ Per-item failures do not automatically change the whole-batch HTTP 200 response 
 
 ## POST /v1/labels/file
 
-Multipart text fields: `name` (required), `kind` (default `document`), `output_type` (default `summary`), `max_chars` (default `160`), `style` (`neutral`), `language` (`es`), `purpose`, `before`, `after`, plus a required binary part `file` with an allowed text extension. Extension and UTF-8 are validated, binary/NUL content is rejected. File contents are supplied as `source_code` for `.py` or `text` for other allowed file extensions. The upload is never executed, saved or used as a path.
+Multipart text fields: `name` (required), `kind` (default `document`), `output_type` (default `summary`), `min_chars` (default `1`, advisory), `max_chars` (default `160`), `style` (`neutral`), `language` (`es`), `purpose`, `before`, `after`, plus a required binary part `file` with an allowed text extension. Extension and UTF-8 are validated, binary/NUL content is rejected. File contents are supplied as `source_code` for `.py` or `text` for other allowed file extensions. The upload is never executed, saved or used as a path.
 
 ```bash
 curl -F name=ProjectArchitecture -F output_type=summary -F max_chars=160 \

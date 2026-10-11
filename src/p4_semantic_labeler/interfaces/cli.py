@@ -27,6 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
     label.add_argument("--stdin", action="store_true", help="Read additional context from stdin")
     label.add_argument("--documentation")
     label.add_argument("--output-type", choices=("title", "summary"), default="title")
+    label.add_argument("--min-chars", type=int, default=1, help="Preferred minimum; never blocks a shorter valid label")
     label.add_argument("--max-chars", type=int, default=80)
     label.add_argument("--style", default="neutral")
     label.add_argument("--language", default="es")
@@ -57,7 +58,7 @@ async def _run(args: argparse.Namespace, settings: Settings) -> int:
         request = LabelRequest(
             subject=Subject(kind=args.kind, name=args.name),
             context=Context(**content) if content else None,
-            output_type=args.output_type, max_chars=args.max_chars,
+            output_type=args.output_type, min_chars=args.min_chars, max_chars=args.max_chars,
             style=args.style, language=args.language,
         )
         result = await labeler.agenerate(request)
