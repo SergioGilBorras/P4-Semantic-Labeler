@@ -277,7 +277,15 @@ def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cas
                             sync_bridge_telemetry(labeler, manifest)
                         else:
                             manifest["responses_received"] += 1
-                        item.update(status="COMPLETED", raw_output=raw,
+                        # A length-safe fallback can still lose meaning. Keep
+                        # the provider output as evidence, but require a separate
+                        # semantic review instead of marking it fully completed.
+                        needs_review = any(
+                            isinstance(warning, str) and warning.startswith("output_truncated:")
+                            for warning in raw.get("warnings", [])
+                        )
+                        item.update(status=("SEMANTIC_REVIEW_REQUIRED" if needs_review
+                                            else "COMPLETED"), raw_output=raw,
                                     elapsed_seconds=round(time.monotonic() - start, 3),
                                     objective_checks={
                                         "not_empty": bool(raw.get("label")),
