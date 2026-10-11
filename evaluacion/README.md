@@ -77,9 +77,10 @@ real responses before this experiment, four requiring semantic review due to
 `output_truncated:`. This is descriptive evidence, not a reliable population
 failure rate; other cases still need representative evaluation.
 
-New run manifests include `prompt_system_sha256`, a SHA-256 fingerprint of
-the runtime `label_system.txt` template. Older manifests lack this key; do
-not edit them retroactively. Keep the pre-change commit SHA separately, and
+New run manifests include `prompt_system_sha256` and
+`prompt_reduction_sha256`, SHA-256 fingerprints of the runtime
+`label_system.txt` and `label_reduction.txt` templates. Older manifests may
+lack these keys; do not edit them retroactively. Keep the pre-change commit SHA separately, and
 compare new runs by fingerprint. `input_sha256` records the selected case input.
 
 The laboratory defaults to `reduction_attempts=0`: `-Repetitions 2 -MaxCalls 2`
