@@ -83,6 +83,7 @@ $truncated.raw_output['warnings'] = @('output_truncated: meaning may be incomple
 [void](Add-FixtureRun '20261011T100001Z_111111111111' -Results @($truncated))
 $multi = @(1..8 | ForEach-Object { New-CompletedResult ('SL-{0:D4}' -f $_) })
 $multi[0].raw_output['warnings'] = @('context_missing')
+$multi[1].raw_output['warnings'] = @('below_preferred_min_chars')
 [void](Add-FixtureRun '20261011T100002Z_222222222222' -Results $multi)
 [void](Add-FixtureRun '20261011T100003Z_333333333333' -Provider 'codex' -Results @((New-CompletedResult 'SL-0002' 'codex')))
 $providerError = [pscustomobject]@{
@@ -124,6 +125,7 @@ try {
     Assert-Equal $partial.totals.completed_results 10 'Completed result count'
     Assert-Equal $partial.totals.other_results 1 'Provider error result count'
     Assert-Equal $partial.totals.results_requiring_review 1 'Historical truncated output flagged'
+    Assert-Equal $partial.totals.results_below_preferred_minimum 1 'Advisory minimum does not change run status'
     $truncatedRun = @($partial.runs | Where-Object { $_.run_id -eq '20261011T100001Z_111111111111' })
     Assert-Equal $truncatedRun[0].results[0].status 'COMPLETED' 'Historical status is not rewritten'
     Assert-Equal $truncatedRun[0].results[0].needs_semantic_review $true 'Truncation requires review'
@@ -136,6 +138,9 @@ try {
     Assert-Equal $batchRun.Count 1 'Multi-case run present'
     Assert-Equal (@($batchRun[0].results).Count) 8 'Eight results are independent rows'
     Assert-Equal $batchRun[0].results[0].needs_semantic_review $false 'Unrelated warnings are ignored'
+    Assert-Equal $batchRun[0].results[1].below_preferred_min_chars $true 'Preferred minimum warning is exposed'
+    Assert-Equal $batchRun[0].results[1].needs_semantic_review $false 'Advisory minimum is not review-required'
+    Assert-Equal $batchRun[0].results[1].status 'COMPLETED' 'Advisory minimum does not block result'
     $errorRun = @($partial.runs | Where-Object { $_.run_id -eq '20261011T100004Z_444444444444' })
     Assert-Equal $errorRun[0].results[0].status 'ERROR' 'Provider error survives summarization'
 } finally {
@@ -150,6 +155,7 @@ foreach ($attempt in 1..2) {
     Assert-Equal $report.totals.runs 5 ('Restored runs, attempt ' + $attempt)
     Assert-Equal $report.totals.results 12 ('Restored results, attempt ' + $attempt)
     Assert-Equal $report.totals.results_requiring_review 1 'Repeat retains review flag'
+    Assert-Equal $report.totals.results_below_preferred_minimum 1 'Repeat retains advisory count'
     Assert-Equal $report.totals.skipped_directories 4 ('Remaining damaged fixtures, attempt ' + $attempt)
     Assert-Equal $report.complete $false 'Report remains partial for invalid historical fixtures'
 }
