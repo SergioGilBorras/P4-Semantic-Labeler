@@ -238,6 +238,9 @@ def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cas
         "prompt_system_sha256": record_sha(
             ROOT.parent / "src" / "p4_semantic_labeler" / "prompts" / "label_system.txt"
         ),
+        "prompt_reduction_sha256": record_sha(
+            ROOT.parent / "src" / "p4_semantic_labeler" / "prompts" / "label_reduction.txt"
+        ),
         "model_effective": "NO_DISPONIBLE", "tokens": "NO_DISPONIBLE",
         "cost": "NO_DISPONIBLE", "timeout_seconds": timeout,
         "max_calls": max_calls, "reduction_attempts": reduction_attempts,
