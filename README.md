@@ -53,7 +53,7 @@ curl -X POST http://127.0.0.1:8000/v1/labels \
   -H 'Content-Type: application/json' -d '{
   "subject": {"kind": "function", "name": "process_pending_orders"},
   "context": {"documentation": "Validates orders and prepares dispatch."},
-  "output_type": "title", "max_chars": 45, "style": "formal", "language": "es"
+  "output_type": "title", "min_chars": 20, "max_chars": 45, "style": "formal", "language": "es"
 }'
 ```
 
@@ -71,14 +71,22 @@ Mock response (illustrative, not a Codex response):
 }
 ```
 
-`POST /v1/labels/batch` accepts `{"items": [{...}, {...}]}` and returns ordered per-item results and errors. Invalid individual dictionary items do not prevent valid items from running. `POST /v1/labels/file` accepts multipart form fields (`file`, `name`, optionally `kind`, `output_type`, `max_chars`, `style`, `language`, `purpose`, `before`, `after`). `GET /health` returns the liveness status and configured provider, **not** AI-provider readiness.
+The optional request field `min_chars` (default `1`) is **only a preferred
+minimum**. A good shorter label succeeds, with informational warning
+`below_preferred_min_chars`; it never triggers a retry, failure or artificial
+padding. `max_chars` remains a **hard maximum**, with the existing
+budget-controlled overlength rewrite and last-resort truncation warning.
+Prompts favor **what the subject does**, without needless "not X" contrasts,
+while retaining essential prohibitions and conditions.
+
+`POST /v1/labels/batch` accepts `{"items": [{...}, {...}]}` and returns ordered per-item results and errors. Invalid individual dictionary items do not prevent valid items from running. `POST /v1/labels/file` accepts multipart form fields (`file`, `name`, optionally `kind`, `output_type`, `min_chars`, `max_chars`, `style`, `language`, `purpose`, `before`, `after`). `GET /health` returns the liveness status and configured provider, **not** AI-provider readiness.
 
 ## CLI
 
 ```bash
 p4-labeler label --name cache_invalid --kind concept \
   --documentation 'A condition indicating cache invalidation' \
-  --max-chars 35 --style technical --language en --json
+  --min-chars 15 --max-chars 35 --style technical --language en --json
 
 printf 'Contextual notes' | p4-labeler label --name example --stdin --json
 
@@ -98,7 +106,7 @@ labeler = Labeler(settings=Settings(provider="mock"))  # demo only
 request = LabelRequest(
     subject=Subject(kind="function", name="process_pending_orders"),
     context=Context(documentation="Validate and prepare orders."),
-    output_type="title", max_chars=45, style="formal", language="es",
+    output_type="title", min_chars=20, max_chars=45, style="formal", language="es",
 )
 result = labeler.generate(request)  # sync entry point, outside an event loop
 # Inside async programs: result = await labeler.agenerate(request)
@@ -127,7 +135,7 @@ All settings are environment variables. Defaults are intended for local use.
 |---|---:|---|
 | `P4_LABELER_PROVIDER` | `disabled` | `disabled`, `mock`, or `codex` (requires optional P4-Codex-Bridge 1.2.0 or later; see [Codex setup](docs/codex.md)) |
 | `P4_LABELER_CODEX_WORKSPACE` | managed temporary workspace | Existing absolute Codex working directory, if explicitly configured |
-| `P4_LABELER_MIN_CHARS` | `1` | Min length requested |
+| `P4_LABELER_MIN_CHARS` | `1` | Minimum **allowed value for request `max_chars`** (configuration guard, not the optional per-request preferred output minimum) |
 | `P4_LABELER_MAX_CHARS` | `300` | Max length requested |
 | `P4_LABELER_MAX_REQUEST_BYTES` | `1048576` | HTTP request body cap |
 | `P4_LABELER_MAX_FILE_BYTES` | `524288` | Readable file cap |
@@ -144,6 +152,11 @@ All settings are environment variables. Defaults are intended for local use.
 | `P4_LABELER_MCP_ROOTS` | *empty* | OS-path-separator-delimited allowed MCP roots; file tool disabled if empty |
 
 ## Length policy
+
+The per-request `min_chars` (default `1`) is **advisory** and must not
+exceed `max_chars`; a shorter meaningful output is returned unchanged,
+with `below_preferred_min_chars` in `warnings`. Such output is not a
+technical failure and does not consume an additional provider call.
 
 1. Normalize output to Unicode **NFC** and collapse whitespace to one line.
 2. Count **Python Unicode code points**, including punctuation, spaces and emoji code points (not UTF-8 bytes or grapheme clusters).
