@@ -153,16 +153,25 @@ $report = [ordered]@{
 }
 $json = $report | ConvertTo-Json -Depth 15
 $temp = Join-Path $root.FullName ('.evaluation-summary-' + [guid]::NewGuid().ToString('N') + '.tmp')
+# .NET Framework on Windows PowerShell 5.1 requires a valid backup filename
+# for File.Replace; passing $null fails with "The path is not of a legal form".
+$backup = Join-Path $root.FullName ('.evaluation-summary-backup-' + [guid]::NewGuid().ToString('N') + '.bak')
+$replaced = $false
 try {
     [System.IO.File]::WriteAllText($temp, $json + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
     if (Test-Path -LiteralPath $summaryPath) {
-        [System.IO.File]::Replace($temp, $summaryPath, $null)
+        [System.IO.File]::Replace($temp, $summaryPath, $backup)
+        $replaced = $true
     } else {
         [System.IO.File]::Move($temp, $summaryPath)
     }
 } finally {
     if (Test-Path -LiteralPath $temp) {
         Remove-Item -LiteralPath $temp -Force
+    }
+    # If replacement failed partway, preserve the backup for recovery.
+    if ($replaced -and (Test-Path -LiteralPath $backup)) {
+        Remove-Item -LiteralPath $backup -Force
     }
 }
 Write-Host ('Consolidated {0} runs and {1} results; skipped {2} directories; complete={3}.' -f $runs.Count, $itemCount, $skipped.Count, ($skipped.Count -eq 0))
