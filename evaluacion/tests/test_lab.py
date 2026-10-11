@@ -37,6 +37,24 @@ def test_dry_run_without_provider(monkeypatch, portable_tmp_path):
     assert not (directory / "results.json").exists()
 
 
+def test_run_manifest_fingerprints_active_system_prompt(monkeypatch, portable_tmp_path):
+    """The prompt fingerprint is audit metadata, not a model invocation."""
+    import hashlib
+    from pathlib import Path
+
+    monkeypatch.setattr(lab, "OUTPUT", portable_tmp_path)
+    manifest, directory = lab.make_run(
+        "piloto", None, "prepare", 1, 1, 1, 120, False, False, case_id="SL-0002"
+    )
+    prompt_file = Path(__file__).resolve().parents[2] / "src" / "p4_semantic_labeler" / "prompts" / "label_system.txt"
+    expected = hashlib.sha256(prompt_file.read_bytes()).hexdigest()
+    assert manifest["prompt_system_sha256"] == expected
+    persisted = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
+    assert persisted["prompt_system_sha256"] == expected
+    assert manifest["observed_calls"] == 0
+    assert manifest["inferences_confirmed"] == 0
+
+
 def test_individual_case_prepare_preserves_input_and_excludes_rubric(monkeypatch, portable_tmp_path):
     monkeypatch.setattr(lab, "OUTPUT", portable_tmp_path)
     result, directory = lab.make_run(
