@@ -109,6 +109,7 @@ function global:Test-Path {
 try {
     $path = & $summaryScript
     $partial = Get-Content -LiteralPath $path -Encoding UTF8 -Raw | ConvertFrom-Json
+    Write-Host ('Fixture skip reasons: ' + (ConvertTo-Json -InputObject @($partial.skipped) -Compress -Depth 5))
     Assert-Equal $partial.complete $false 'Protected/malformed report must be partial'
     Assert-Equal $partial.totals.runs 4 'Valid run count with protected fixture'
     Assert-Equal $partial.totals.results 11 'Single + 8-case + real + provider-error result count'
