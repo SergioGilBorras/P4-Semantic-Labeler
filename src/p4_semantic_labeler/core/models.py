@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class StrictModel(BaseModel):
@@ -34,9 +34,16 @@ class LabelRequest(StrictModel):
     subject: Subject
     context: Context | None = None
     output_type: Literal["title", "summary"] = "title"
+    min_chars: int = Field(default=1, ge=1, le=10_000)  # Preferred only; not a hard output bound.
     max_chars: int = Field(default=80, ge=1, le=10_000)
     style: str = Field(default="neutral", min_length=1, max_length=64, pattern=r"^[\w-]+$")
     language: str = Field(default="es", min_length=2, max_length=35)
+
+    @model_validator(mode="after")
+    def valid_preferred_range(self) -> "LabelRequest":
+        if self.min_chars > self.max_chars:
+            raise ValueError("min_chars must not exceed max_chars")
+        return self
 
     @field_validator("language")
     @classmethod
