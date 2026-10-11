@@ -63,6 +63,11 @@ jobs:
                 $partial.skipped[0].reason -ne 'access_denied') {
               throw 'Access-denied run was not safely reported as skipped.'
             }
+            # Even with -Apply, an inaccessible run must never be deleted.
+            & .\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0 -Apply
+            if (@(Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory).Count -ne 1) {
+              throw 'Cleanup removed or failed to preserve the protected mock run.'
+            }
           } finally {
             Remove-Item -LiteralPath Function:\Test-Path -ErrorAction SilentlyContinue
             Remove-Variable AccessDeniedManifest -Scope Global -ErrorAction SilentlyContinue
