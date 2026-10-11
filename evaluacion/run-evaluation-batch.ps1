@@ -7,6 +7,8 @@ param(
     [string]$PythonExecutable,
     [ValidateRange(1, 10)]
     [int]$Repetitions = 1,
+    [ValidateRange(0, 1)]
+    [int]$ReductionAttempts = 0,
     [ValidateRange(1, 1000)]
     [int]$MaxCases = 8,
     [ValidateRange(1, 10000)]
@@ -52,7 +54,7 @@ foreach ($id in $CaseIds) {
     }
 }
 if ($CaseIds.Count -gt 0 -and
-    ($CaseIds.Count -gt $MaxCases -or $CaseIds.Count * $Repetitions -gt $MaxCalls)) {
+    ($CaseIds.Count -gt $MaxCases -or ([long]$CaseIds.Count * $Repetitions * (1 + $ReductionAttempts)) -gt $MaxCalls)) {
     throw 'Requested case count or repetitions exceed the total run limits.'
 }
 if ($CaseIds.Count -eq 0) {
@@ -68,7 +70,7 @@ try {
     foreach ($caseId in $plan) {
         $callsForRun = $MaxCalls
         if ($null -ne $caseId) {
-            $callsForRun = $Repetitions
+            $callsForRun = $Repetitions * (1 + $ReductionAttempts)
         }
         $arguments = @(
             '-m', 'evaluacion.herramientas.lab', 'run',
@@ -76,6 +78,7 @@ try {
             '--repetitions', [string]$Repetitions,
             '--max-cases', [string]$MaxCases,
             '--max-calls', [string]$callsForRun,
+            '--reduction-attempts', [string]$ReductionAttempts,
             '--timeout', [string]$Timeout
         )
         if ($SetName -eq 'lote') {
@@ -87,7 +90,7 @@ try {
         if ($Real) {
             $arguments += @('--real', '--approve-real')
         }
-        Write-Host ('Starting evaluation: set={0} case={1} real={2}, call limit={3}' -f $SetName, $caseId, [bool]$Real, $callsForRun)
+        Write-Host ('Starting evaluation: set={0} case={1} real={2}, call limit={3}, reduction retries={4}' -f $SetName, $caseId, [bool]$Real, $callsForRun, $ReductionAttempts)
         Push-Location -LiteralPath $projectRoot
         try {
             $lines = @(& $python @arguments 2>$null)

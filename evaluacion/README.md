@@ -30,6 +30,10 @@ Run these commands from the repository root with the project's `.venv` installed
 # Exactly one real inference; requires explicit authorization flags.
 .\evaluacion\run-evaluation-batch.ps1 -SetName piloto -CaseIds SL-0001 -MaxCases 1 -MaxCalls 1 -Real -ApproveReal
 
+# Opt-in reduction: one initial request and, only if overlength, at most one
+# additional request with the prior candidate as untrusted input. Up to 2 calls.
+.\evaluacion\run-evaluation-batch.ps1 -SetName piloto -CaseIds SL-0002 -Repetitions 1 -ReductionAttempts 1 -MaxCases 1 -MaxCalls 2 -Real -ApproveReal
+
 # Full pilot with real inference: AT MOST eight model calls.
 .\evaluacion\run-evaluation-batch.ps1 -SetName piloto -MaxCases 8 -MaxCalls 8 -Real -ApproveReal
 
@@ -37,7 +41,7 @@ Run these commands from the repository root with the project's `.venv` installed
 .\evaluacion\summarize-evaluations.ps1
 ```
 
-`run-evaluation-batch.ps1` calls the existing Python laboratory. If no case IDs are supplied, the complete selected cohort is one Python run. With `-CaseIds`, each ID is a separate run; the total requested repetitions must fit within `-MaxCalls`. To evaluate a larger cohort, increase `-MaxCases` and `-MaxCalls` explicitly. For registered external batches, use `-SetName lote -Batch YOUR_EXISTING_BATCH_ID`. Real model requests only happen with both `-Real` and `-ApproveReal`, so each invocation can incur model usage. The launcher does not retry failed requests. By default it uses the project `.venv` on Windows; `-PythonExecutable` accepts an explicit absolute interpreter path for CI or a separate environment.
+`run-evaluation-batch.ps1` calls the existing Python laboratory. If no case IDs are supplied, the complete selected cohort is one Python run. With `-CaseIds`, each ID is a separate run; the total requested repetitions must fit within `-MaxCalls`. To evaluate a larger cohort, increase `-MaxCases` and `-MaxCalls` explicitly. For registered external batches, use `-SetName lote -Batch YOUR_EXISTING_BATCH_ID`. Real model requests only happen with both `-Real` and `-ApproveReal`, so each invocation can incur model usage. The launcher does not retry failed requests. With `-ReductionAttempts 1`, an **overlong but otherwise valid** output may be rewritten once by Codex; this is a fresh billable provider call, not a transport-error retry. To enable it, explicitly authorize enough calls: `MaxCalls >= number_of_cases * Repetitions * (1 + ReductionAttempts)`. The default `-ReductionAttempts 0` preserves the one-call behavior. The evaluation tracks real bridge attempts separately from runner items, and the manifest records the retry setting. By default it uses the project `.venv` on Windows; `-PythonExecutable` accepts an explicit absolute interpreter path for CI or a separate environment.
 
 `summarize-evaluations.ps1` scans final runs under `evaluacion/salida/`, and writes **`evaluacion/salida/evaluation-summary.json`**. That single file contains run metadata, case IDs, labels, character counts, objective checks, and safe structured diagnostics. It excludes raw prompts, case input content, rubrics and raw provider output objects. It records skipped/incomplete runs rather than silently interpreting them as success. A multi-case `results.json` is parsed as a JSON array and each case is reported separately; structurally malformed runs are skipped with `malformed_results` instead of interrupting other runs. The report includes `complete: false` when any recognized run was skipped (including `access_denied` for a protected manifest). An access-denied directory does not prevent the accessible runs from being summarized; however, the resulting JSON is **partial** and must not be treated as a complete evaluation of the folder. It never repairs ACLs or deletes unreadable directories. Inspect the summary's `skipped` entries before sharing or scoring results, and investigate access permissions separately. Batch execution updates this file automatically, including after a failed attempt where possible.
 
@@ -45,8 +49,11 @@ Run these commands from the repository root with the project's `.venv` installed
 
 The production service may return a label truncated to the character limit, with
 `output_truncated: meaning may be incomplete` in `raw_output.warnings`. The
-evaluation laboratory deliberately sets `reduction_attempts=0` so the approved
-call budget cannot silently grow. A truncated label is **not** automatic evidence
+evaluation laboratory defaults to `reduction_attempts=0` so the approved
+call budget cannot silently grow; `-ReductionAttempts 1` explicitly reserves
+up to one further call using the first candidate as untrusted reference data.
+If that rewrite still exceeds the limit, the last-resort truncation remains
+visible and requires review. A truncated label is **not** automatic evidence
 of semantic acceptance: for **new** runs, the result is recorded as
 `SEMANTIC_REVIEW_REQUIRED` (the manifest becomes `COMPLETED_WITH_ERRORS`);
 the original label and warning are preserved, and no retry is attempted. The
@@ -70,14 +77,18 @@ real responses before this experiment, four requiring semantic review due to
 `output_truncated:`. This is descriptive evidence, not a reliable population
 failure rate; other cases still need representative evaluation.
 
-New run manifests include `prompt_system_sha256`, a SHA-256 fingerprint of
-the runtime `label_system.txt` template. Older manifests lack this key; do
-not edit them retroactively. Keep the pre-change commit SHA separately, and
+New run manifests include `prompt_system_sha256` and
+`prompt_reduction_sha256`, SHA-256 fingerprints of the runtime
+`label_system.txt` and `label_reduction.txt` templates. Older manifests may
+lack these keys; do not edit them retroactively. Keep the pre-change commit SHA separately, and
 compare new runs by fingerprint. `input_sha256` records the selected case input.
 
-The laboratory keeps `reduction_attempts=0`: `-Repetitions 2 -MaxCalls 2`
-authorizes **at most two actual provider calls**, not two plus hidden shortening
-retries. A truncated response remains
+The laboratory defaults to `reduction_attempts=0`: `-Repetitions 2 -MaxCalls 2`
+authorizes **at most two actual provider calls**. To opt in to rewriting
+overlength answers, use `-Repetitions 2 -ReductionAttempts 1 -MaxCalls 4`:
+two labels, each requiring at most two provider calls, all explicitly
+approved. The system reuses the frozen original input and sends the previous
+candidate only as untrusted data, never as a new instruction. A truncated response remains
 `SEMANTIC_REVIEW_REQUIRED`, and the launcher may exit nonzero despite
 `report_success=True`. Inspect the final report rather than re-executing the
 batch automatically.

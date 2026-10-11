@@ -51,6 +51,10 @@ def test_run_manifest_fingerprints_active_system_prompt(monkeypatch, portable_tm
     assert manifest["prompt_system_sha256"] == expected
     persisted = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
     assert persisted["prompt_system_sha256"] == expected
+    reduction_file = prompt_file.with_name("label_reduction.txt")
+    reduction_hash = hashlib.sha256(reduction_file.read_bytes()).hexdigest()
+    assert manifest["prompt_reduction_sha256"] == reduction_hash
+    assert persisted["prompt_reduction_sha256"] == reduction_hash
     assert manifest["observed_calls"] == 0
     assert manifest["inferences_confirmed"] == 0
 
@@ -167,6 +171,91 @@ def test_truncated_label_requires_manual_review_without_extra_calls(
     assert manifest["observed_calls"] == 1
     assert manifest["bridge_calls_attempted"] == 0
     assert manifest["inferences_confirmed"] == 0
+
+
+def test_extra_reduction_call_requires_budget_before_creating_run(monkeypatch):
+    def unexpected_run_dir():
+        pytest.fail("No run may be created when the model-call budget is too small")
+
+    monkeypatch.setattr(lab, "new_run_dir", unexpected_run_dir)
+    with pytest.raises(ValueError, match="explicitly approved cap"):
+        lab.make_run(
+            "piloto", None, "run", 1, 1, 1, 120, True, True,
+            case_id="SL-0002", reduction_attempts=1,
+        )
+    with pytest.raises(ValueError, match="Reduction attempts must be 0 or 1"):
+        lab.make_run(
+            "piloto", None, "run", 1, 1, 3, 120, True, True,
+            case_id="SL-0002", reduction_attempts=2,
+        )
+
+
+@pytest.mark.parametrize(
+    "revised, expected_status, expected_run_status, expected_warning",
+    [
+        ("Renovar caché vencida antes de leer", "COMPLETED", "COMPLETED",
+         "length_reduced_by_provider"),
+        ("Caché vencida: renovar antes de leer toda la información",
+         "SEMANTIC_REVIEW_REQUIRED", "COMPLETED_WITH_ERRORS",
+         "output_truncated: meaning may be incomplete"),
+    ],
+)
+def test_budgeted_reduction_uses_two_offline_calls_and_keeps_audit(
+    monkeypatch, portable_tmp_path, revised, expected_status,
+    expected_run_status, expected_warning,
+):
+    """Simulate Codex telemetry without connecting to any real service."""
+    from p4_semantic_labeler.providers.base import ProviderResponse
+
+    original = "Caché vencida: renovar antes de leer toda la información"
+
+    class OfflineCodex:
+        name = "codex"
+
+        def __init__(self):
+            self.prompts = []
+
+        async def generate(self, prompt):
+            self.prompts.append(prompt)
+            response = original if len(self.prompts) == 1 else revised
+            return ProviderResponse(response)
+
+        def telemetry_snapshot(self):
+            n = len(self.prompts)
+            return {
+                "bridge_calls_attempted": n,
+                "bridge_results_received": n,
+                "provider_responses_received": n,
+                "inferences_confirmed": n,
+            }
+
+    fake = OfflineCodex()
+    monkeypatch.setattr(lab, "OUTPUT", portable_tmp_path)
+    monkeypatch.setattr(
+        "p4_semantic_labeler.core.service.create_provider", lambda settings: fake,
+    )
+    manifest, directory = lab.make_run(
+        "piloto", None, "run", 1, 1, 2, 120, True, True,
+        case_id="SL-0002", reduction_attempts=1,
+    )
+    result = json.loads((directory / "results.json").read_text(encoding="utf-8"))[0]
+    assert result["status"] == expected_status
+    assert result["raw_output"]["warnings"][-1] == expected_warning
+    assert result["raw_output"]["char_count"] <= 35
+    assert manifest["status"] == expected_run_status
+    assert manifest["reduction_attempts"] == 1
+    assert manifest["max_calls"] == 2
+    assert manifest["runner_calls_attempted"] == 1
+    assert manifest["observed_calls"] == 2
+    assert manifest["bridge_calls_attempted"] == 2
+    assert manifest["bridge_results_received"] == 2
+    assert manifest["inferences_confirmed"] == 2
+    assert len(fake.prompts) == 2
+    assert "previous_candidate_untrusted" not in fake.prompts[0].user
+    assert json.loads(fake.prompts[1].user)["previous_candidate_untrusted"] == original
+    assert "too long for the character limit" in fake.prompts[1].system
+    assert "Preserve the supported action or state" in fake.prompts[1].system
+    assert original not in fake.prompts[1].system
 
 
 def test_lab_error_diagnostics_allow_only_known_codes():

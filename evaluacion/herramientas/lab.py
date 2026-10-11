@@ -190,11 +190,13 @@ def sync_bridge_telemetry(labeler, manifest: dict) -> None:
         if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
             manifest[target] = value
     manifest["model_invoked"] = manifest["inferences_confirmed"] > 0
+    # Unlike runner_calls_attempted, this includes any reduction retries.
+    manifest["observed_calls"] = manifest["bridge_calls_attempted"]
 
 
 def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cases: int,
              max_calls: int, timeout: float, real: bool, consent: bool,
-             case_id: str | None = None):
+             case_id: str | None = None, reduction_attempts: int = 0):
     config = yaml.safe_load((ROOT / "configuracion" / "evaluacion.yaml").read_text(encoding="utf-8"))
     if config.get("real_inference_default") is not False:
         raise ValueError("Real inference default must be disabled")
@@ -202,6 +204,8 @@ def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cas
         raise ValueError("Invalid run size")
     if not 1 <= max_calls <= 10000 or not 1 <= timeout <= 3600:
         raise ValueError("Invalid provider budget")
+    if reduction_attempts not in (0, 1):
+        raise ValueError("Reduction attempts must be 0 or 1")
     if real and (not consent or mode != "run"):
         raise ValueError("Real inference needs --real and --approve-real for run")
     selected = select_cases(which, batch)
@@ -212,7 +216,9 @@ def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cas
         selected = filtered
     if len(selected) > max_cases:
         raise ValueError("Selection exceeds --max-cases; no cases executed")
-    if len(selected) * repetitions > max_calls:
+    # Reserve the worst case: one initial call plus each permitted rewrite.
+    # This makes the approved limit a strict cap on actual provider calls.
+    if len(selected) * repetitions * (1 + reduction_attempts) > max_calls:
         if real:
             raise ValueError("Requested calls exceed the explicitly approved cap")
         raise ValueError("Run exceeds maximum call budget")
@@ -232,9 +238,13 @@ def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cas
         "prompt_system_sha256": record_sha(
             ROOT.parent / "src" / "p4_semantic_labeler" / "prompts" / "label_system.txt"
         ),
+        "prompt_reduction_sha256": record_sha(
+            ROOT.parent / "src" / "p4_semantic_labeler" / "prompts" / "label_reduction.txt"
+        ),
         "model_effective": "NO_DISPONIBLE", "tokens": "NO_DISPONIBLE",
         "cost": "NO_DISPONIBLE", "timeout_seconds": timeout,
-        "max_calls": max_calls, "real_authorization": real and consent,
+        "max_calls": max_calls, "reduction_attempts": reduction_attempts,
+        "real_authorization": real and consent,
         "audit": config["audit"], "external_submission": False,
         "model_invoked": False, "observed_calls": 0,
         "runner_calls_attempted": 0, "bridge_calls_attempted": 0,
@@ -256,10 +266,13 @@ def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cas
     from p4_semantic_labeler.core.models import LabelRequest
     from p4_semantic_labeler.core.service import Labeler
     settings = Settings(provider="codex" if real else "mock",
-                        provider_timeout_seconds=timeout, reduction_attempts=0)
+                        provider_timeout_seconds=timeout,
+                        reduction_attempts=reduction_attempts)
     labeler = Labeler(settings=settings)
     async def call_one(req):
-        return await asyncio.wait_for(labeler.agenerate(req), timeout=timeout + 10)
+        return await asyncio.wait_for(
+            labeler.agenerate(req), timeout=timeout * (1 + reduction_attempts) + 10
+        )
     results = []
     try:
         for cid, root in selected:
@@ -270,7 +283,7 @@ def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cas
                         "raw_output": None, "status": "UNKNOWN"}
                 try:
                     req = LabelRequest.model_validate(original)
-                    if manifest["observed_calls"] >= max_calls:
+                    if manifest["observed_calls"] + 1 + reduction_attempts > max_calls:
                         item.update(status="BUDGET_EXHAUSTED", error="call_cap")
                     else:
                         manifest["runner_calls_attempted"] += 1
@@ -378,6 +391,7 @@ def main():
         p.add_argument("--repetitions", type=int, default=1)
         p.add_argument("--max-cases", type=int, default=60)
         p.add_argument("--max-calls", type=int, default=60)
+        p.add_argument("--reduction-attempts", type=int, choices=(0, 1), default=0)
         p.add_argument("--timeout", type=float, default=120)
         p.add_argument("--real", action="store_true")
         p.add_argument("--approve-real", action="store_true")
@@ -396,7 +410,7 @@ def main():
             answer, folder = make_run(args.set, args.batch, args.command,
                                       args.repetitions, args.max_cases, args.max_calls,
                                       args.timeout, args.real, args.approve_real,
-                                      args.case_id)
+                                      args.case_id, args.reduction_attempts)
             answer["directory"] = str(folder)
         elif args.command == "export":
             answer = {"export_directory": str(export_run(args.run_dir))}
