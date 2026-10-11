@@ -255,6 +255,7 @@ def test_budgeted_reduction_uses_two_offline_calls_and_keeps_audit(
     assert json.loads(fake.prompts[1].user)["previous_candidate_untrusted"] == original
     assert "too long for the character limit" in fake.prompts[1].system
     assert "Preserve the supported action or state" in fake.prompts[1].system
+    assert "State what the subject does or is directly" in fake.prompts[1].system
     assert original not in fake.prompts[1].system
 
 
