@@ -25,83 +25,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $remnants = @(Get-ChildItem -LiteralPath '.' -Directory -Force | Where-Object {
-            $_.Name -match '^\d{8}T\d{12}Z-[0-9a-f]{24}
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          $ErrorActionPreference = 'Stop'
-          foreach ($file in @('evaluacion/cleanup-evaluations.ps1', 'evaluacion/run-evaluation-batch.ps1', 'evaluacion/summarize-evaluations.ps1')) {
-            $tokens = $null
-            $parseErrors = $null
-            [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path -LiteralPath $file).Path, [ref]$tokens, [ref]$parseErrors)
-            if ($null -ne $parseErrors -and $parseErrors.Count -gt 0) { throw "PowerShell syntax failed: $file" }
-          }
-      - name: Mock evaluation, aggregate and cleanup smoke (Windows Python 3.11)
-        if: runner.os == 'Windows' && matrix.python-version == '3.11'
-        shell: powershell
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $interpreter = (Get-Command python).Source
-          & .\evaluacion\run-evaluation-batch.ps1 -SetName piloto -CaseIds SL-0001 -MaxCases 1 -MaxCalls 1 -PythonExecutable $interpreter
-          if ($LASTEXITCODE -ne 0) { throw 'Mock batch failed' }
-          $reportPath = '.\evaluacion\salida\evaluation-summary.json'
-          if (-not (Test-Path -LiteralPath $reportPath)) { throw 'Missing consolidated report' }
-          $report = Get-Content -LiteralPath $reportPath -Encoding UTF8 -Raw | ConvertFrom-Json
-          if ($report.totals.runs -ne 1 -or $report.totals.completed_results -ne 1) { throw 'Incorrect report totals' }
-          # Mock a protected historical manifest: do not change real Windows ACLs.
-          $global:AccessDeniedManifest = Join-Path (Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory | Select-Object -First 1).FullName 'manifest.json'
-          function global:Test-Path {
-            param([string]$LiteralPath, [string]$PathType)
-            if ($LiteralPath -ceq $global:AccessDeniedManifest) {
-              throw [System.UnauthorizedAccessException]::new('simulated access denied')
-            }
-            if ($PSBoundParameters.ContainsKey('PathType')) {
-              Microsoft.PowerShell.Management\Test-Path -LiteralPath $LiteralPath -PathType $PathType
-            } else {
-              Microsoft.PowerShell.Management\Test-Path -LiteralPath $LiteralPath
-            }
-          }
-          try {
-            & .\evaluacion\summarize-evaluations.ps1
-            $partial = Get-Content -LiteralPath $reportPath -Encoding UTF8 -Raw | ConvertFrom-Json
-            if ($partial.complete -ne $false -or $partial.totals.runs -ne 0 -or
-                $partial.totals.skipped_directories -ne 1 -or
-                $partial.skipped[0].reason -ne 'access_denied') {
-              throw 'Access-denied run was not safely reported as skipped.'
-            }
-            # Even with -Apply, an inaccessible run must never be deleted.
-            & .\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0 -Apply
-            if (@(Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory).Count -ne 1) {
-              throw 'Cleanup removed or failed to preserve the protected mock run.'
-            }
-          } finally {
-            Remove-Item -LiteralPath Function:\Test-Path -ErrorAction SilentlyContinue
-            Remove-Variable AccessDeniedManifest -Scope Global -ErrorAction SilentlyContinue
-          }
-          & .\evaluacion\summarize-evaluations.ps1
-          $restored = Get-Content -LiteralPath $reportPath -Encoding UTF8 -Raw | ConvertFrom-Json
-          if ($restored.complete -ne $true -or $restored.totals.runs -ne 1) {
-            throw 'Normal run was not restored after the mock failure.'
-          }
-          & .\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0
-          if (@(Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory).Count -ne 1) { throw 'Unexpected run directory' }
-          & .\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0 -Apply
-          if (@(Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory).Count -ne 0) { throw 'Cleanup left a run directory' }
-          if (-not (Test-Path -LiteralPath $reportPath)) { throw 'Cleanup removed consolidated report' }
-          # A full eight-case JSON array must not be treated as one malformed row.
-          & .\evaluacion\run-evaluation-batch.ps1 -SetName piloto -MaxCases 8 -MaxCalls 8 -PythonExecutable $interpreter
-          if ($LASTEXITCODE -ne 0) { throw 'Eight-case mock batch failed' }
-          $multi = Get-Content -LiteralPath $reportPath -Encoding UTF8 -Raw | ConvertFrom-Json
-          if ($multi.complete -ne $true -or $multi.totals.runs -ne 1 -or
-              $multi.totals.results -ne 8 -or $multi.totals.completed_results -ne 8 -or
-              $multi.runs[0].results.Count -ne 8) {
-            throw 'PowerShell incorrectly parsed the eight-case JSON results.'
-          }
-          & .\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0 -Apply
-          if (@(Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory).Count -ne 0) {
-            throw 'Cleanup left eight-case run directories.'
-          }
-
+            $_.Name -match '^\d{8}T\d{12}Z-[0-9a-f]{24}$'
           })
           if ($remnants.Count -ne 0) {
             throw 'Portable pytest session parent was not removed.'
@@ -169,3 +93,16 @@ jobs:
           & .\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0 -Apply
           if (@(Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory).Count -ne 0) { throw 'Cleanup left a run directory' }
           if (-not (Test-Path -LiteralPath $reportPath)) { throw 'Cleanup removed consolidated report' }
+          # An eight-case JSON array must produce eight separate result records.
+          & .\evaluacion\run-evaluation-batch.ps1 -SetName piloto -MaxCases 8 -MaxCalls 8 -PythonExecutable $interpreter
+          if ($LASTEXITCODE -ne 0) { throw 'Eight-case mock batch failed' }
+          $multi = Get-Content -LiteralPath $reportPath -Encoding UTF8 -Raw | ConvertFrom-Json
+          if ($multi.complete -ne $true -or $multi.totals.runs -ne 1 -or
+              $multi.totals.results -ne 8 -or $multi.totals.completed_results -ne 8 -or
+              $multi.runs[0].results.Count -ne 8) {
+            throw 'PowerShell incorrectly parsed the eight-case JSON results.'
+          }
+          & .\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0 -Apply
+          if (@(Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory).Count -ne 0) {
+            throw 'Cleanup left eight-case run directories.'
+          }
