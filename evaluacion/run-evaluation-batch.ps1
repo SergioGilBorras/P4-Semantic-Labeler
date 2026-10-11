@@ -61,7 +61,8 @@ if ($CaseIds.Count -eq 0) {
     $plan = @($CaseIds)
 }
 
-$failed = $false
+$runFailed = $false
+$reportFailed = $false
 $completed = 0
 try {
     foreach ($caseId in $plan) {
@@ -118,7 +119,7 @@ try {
         }
     }
 } catch {
-    $failed = $true
+    $runFailed = $true
     Write-Warning ('Evaluation batch stopped: {0}' -f $_.Exception.Message)
 } finally {
     try {
@@ -126,11 +127,11 @@ try {
         Write-Host ('Shareable report: {0}' -f $summaryPath)
         Write-Output $summaryPath
     } catch {
-        $failed = $true
+        $reportFailed = $true
         Write-Warning ('Could not create consolidated report: {0}' -f $_.Exception.GetType().Name)
     }
 }
-Write-Host ('Executed {0} run(s); success={1}' -f $completed, (-not $failed))
-if ($failed) {
+Write-Host ('Executed {0} run(s); evaluation_success={1}; report_success={2}.' -f $completed, (-not $runFailed), (-not $reportFailed))
+if ($runFailed -or $reportFailed) {
     exit 1
 }

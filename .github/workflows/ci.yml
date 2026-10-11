@@ -19,6 +19,17 @@ jobs:
       - run: python -m pip check
       - run: ruff check .
       - run: pytest -q
+      - name: Verify no managed pytest session directories remain
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $remnants = @(Get-ChildItem -LiteralPath '.' -Directory -Force | Where-Object {
+            $_.Name -match '^\d{8}T\d{12}Z-[0-9a-f]{24}$'
+          })
+          if ($remnants.Count -ne 0) {
+            throw 'Portable pytest session parent was not removed.'
+          }
       - name: Parse evaluation PowerShell scripts
         if: runner.os == 'Windows'
         shell: powershell
@@ -82,3 +93,16 @@ jobs:
           & .\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0 -Apply
           if (@(Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory).Count -ne 0) { throw 'Cleanup left a run directory' }
           if (-not (Test-Path -LiteralPath $reportPath)) { throw 'Cleanup removed consolidated report' }
+          # An eight-case JSON array must produce eight separate result records.
+          & .\evaluacion\run-evaluation-batch.ps1 -SetName piloto -MaxCases 8 -MaxCalls 8 -PythonExecutable $interpreter
+          if ($LASTEXITCODE -ne 0) { throw 'Eight-case mock batch failed' }
+          $multi = Get-Content -LiteralPath $reportPath -Encoding UTF8 -Raw | ConvertFrom-Json
+          if ($multi.complete -ne $true -or $multi.totals.runs -ne 1 -or
+              $multi.totals.results -ne 8 -or $multi.totals.completed_results -ne 8 -or
+              $multi.runs[0].results.Count -ne 8) {
+            throw 'PowerShell incorrectly parsed the eight-case JSON results.'
+          }
+          & .\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0 -Apply
+          if (@(Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory).Count -ne 0) {
+            throw 'Cleanup left eight-case run directories.'
+          }
