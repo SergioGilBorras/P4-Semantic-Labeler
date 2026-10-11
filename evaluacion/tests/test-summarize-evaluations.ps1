@@ -78,8 +78,11 @@ function Assert-Equal {
     }
 }
 
-[void](Add-FixtureRun '20261011T100001Z_111111111111' -Results @((New-CompletedResult 'SL-0001')))
+$truncated = New-CompletedResult 'SL-0001'
+$truncated.raw_output['warnings'] = @('output_truncated: meaning may be incomplete')
+[void](Add-FixtureRun '20261011T100001Z_111111111111' -Results @($truncated))
 $multi = @(1..8 | ForEach-Object { New-CompletedResult ('SL-{0:D4}' -f $_) })
+$multi[0].raw_output['warnings'] = @('context_missing')
 [void](Add-FixtureRun '20261011T100002Z_222222222222' -Results $multi)
 [void](Add-FixtureRun '20261011T100003Z_333333333333' -Provider 'codex' -Results @((New-CompletedResult 'SL-0002' 'codex')))
 $providerError = [pscustomobject]@{
@@ -120,6 +123,10 @@ try {
     Assert-Equal $partial.totals.results 11 'Single + 8-case + real + provider-error result count'
     Assert-Equal $partial.totals.completed_results 10 'Completed result count'
     Assert-Equal $partial.totals.other_results 1 'Provider error result count'
+    Assert-Equal $partial.totals.results_requiring_review 1 'Historical truncated output flagged'
+    $truncatedRun = @($partial.runs | Where-Object { $_.run_id -eq '20261011T100001Z_111111111111' })
+    Assert-Equal $truncatedRun[0].results[0].status 'COMPLETED' 'Historical status is not rewritten'
+    Assert-Equal $truncatedRun[0].results[0].needs_semantic_review $true 'Truncation requires review'
     Assert-Equal $partial.totals.skipped_directories 5 'Skipped run count'
     foreach ($reason in @('access_denied', 'malformed_results', 'missing_files')) {
         Assert-Equal (@($partial.skipped | Where-Object { $_.reason -eq $reason }).Count) 1 "Skipped reason $reason"
@@ -128,6 +135,7 @@ try {
     $batchRun = @($partial.runs | Where-Object { $_.run_id -eq '20261011T100002Z_222222222222' })
     Assert-Equal $batchRun.Count 1 'Multi-case run present'
     Assert-Equal (@($batchRun[0].results).Count) 8 'Eight results are independent rows'
+    Assert-Equal $batchRun[0].results[0].needs_semantic_review $false 'Unrelated warnings are ignored'
     $errorRun = @($partial.runs | Where-Object { $_.run_id -eq '20261011T100004Z_444444444444' })
     Assert-Equal $errorRun[0].results[0].status 'ERROR' 'Provider error survives summarization'
 } finally {
@@ -141,6 +149,7 @@ foreach ($attempt in 1..2) {
     $report = Get-Content -LiteralPath $path -Encoding UTF8 -Raw | ConvertFrom-Json
     Assert-Equal $report.totals.runs 5 ('Restored runs, attempt ' + $attempt)
     Assert-Equal $report.totals.results 12 ('Restored results, attempt ' + $attempt)
+    Assert-Equal $report.totals.results_requiring_review 1 'Repeat retains review flag'
     Assert-Equal $report.totals.skipped_directories 4 ('Remaining damaged fixtures, attempt ' + $attempt)
     Assert-Equal $report.complete $false 'Report remains partial for invalid historical fixtures'
 }
