@@ -44,7 +44,7 @@ function Add-FixtureRun {
             (Join-Path $directory 'manifest.json'),
             (ConvertTo-Json -InputObject $manifest -Depth 10), $encoding)
     }
-    if ($null -eq $LiteralResults) {
+    if (-not $PSBoundParameters.ContainsKey('LiteralResults')) {
         # Explicitly construct a JSON array: Windows PowerShell 5.1 does not
         # consistently preserve object[] when bound to ConvertTo-Json -InputObject.
         $serializedRows = @($Results | ForEach-Object {
@@ -98,10 +98,6 @@ $protected = Add-FixtureRun '20261011T100005Z_555555555555' -Results @((New-Comp
 [void](Add-FixtureRun '20261011T100008Z_888888888888' -LiteralResults '{"id":"SL-0005","status":"COMPLETED"}')
 [void](Add-FixtureRun '20261011T100009Z_999999999999' -MissingManifest -Results @((New-CompletedResult 'SL-0005')))
 
-# Temporary diagnostics for the synthetic fixture only (no user inputs).
-$firstFixture = Join-Path $outputRoot '20261011T100001Z_111111111111'
-Write-Host ('Fixture manifest JSON: ' + (Get-Content -LiteralPath (Join-Path $firstFixture 'manifest.json') -Raw))
-Write-Host ('Fixture results JSON: ' + (Get-Content -LiteralPath (Join-Path $firstFixture 'results.json') -Raw))
 # Override only the manifest lookup inside the copied script. No ACL is changed.
 $global:SemanticTestDeniedManifest = Join-Path $protected 'manifest.json'
 function global:Test-Path {
