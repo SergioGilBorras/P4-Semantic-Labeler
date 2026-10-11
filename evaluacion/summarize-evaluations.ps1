@@ -68,7 +68,14 @@ foreach ($directory in @(Get-ChildItem -LiteralPath $root.FullName -Directory -F
         }
         try {
             $manifest = Get-Content -LiteralPath $manifestPath -Encoding UTF8 -Raw | ConvertFrom-Json
-            $items = @(Get-Content -LiteralPath $resultsPath -Encoding UTF8 -Raw | ConvertFrom-Json)
+            $rawResults = Get-Content -LiteralPath $resultsPath -Encoding UTF8 -Raw
+            if (-not $rawResults.TrimStart().StartsWith('[')) {
+                throw 'Expected a JSON array of results.'
+            }
+            # On Windows PowerShell 5.1, @( ... | ConvertFrom-Json )
+            # can wrap a multi-row JSON array as one nested object[]. Assign
+            # first, then enumerate the parsed value using foreach.
+            $parsedResults = $rawResults | ConvertFrom-Json
         } catch {
             if (Test-IsAccessDenied $_) {
                 throw
@@ -83,10 +90,12 @@ foreach ($directory in @(Get-ChildItem -LiteralPath $root.FullName -Directory -F
             continue
         }
         $rows = New-Object 'System.Collections.Generic.List[object]'
-        foreach ($item in $items) {
+        $invalidResults = $false
+        foreach ($item in $parsedResults) {
             if ($null -eq $item -or $item.id -isnot [string] -or
                 $item.status -isnot [string]) {
-                throw ('Malformed result in evaluation {0}.' -f $directory.Name)
+                $invalidResults = $true
+                break
             }
             $label = $null
             $charCount = $null
@@ -108,8 +117,15 @@ foreach ($directory in @(Get-ChildItem -LiteralPath $root.FullName -Directory -F
                 objective_checks = $item.objective_checks
                 input_sha256 = $item.input_sha256
             })
-            $itemCount++
-            if ($item.status -ceq 'COMPLETED') {
+        }
+        if ($invalidResults -or $rows.Count -eq 0) {
+            $skipped.Add([pscustomobject]@{ run_id = $directory.Name; reason = 'malformed_results' })
+            Write-Warning ('Cannot consolidate evaluation {0}: malformed results; report will be partial.' -f $directory.Name)
+            continue
+        }
+        $itemCount += $rows.Count
+        foreach ($row in $rows) {
+            if ($row.status -ceq 'COMPLETED') {
                 $successCount++
             } else {
                 $errorCount++
