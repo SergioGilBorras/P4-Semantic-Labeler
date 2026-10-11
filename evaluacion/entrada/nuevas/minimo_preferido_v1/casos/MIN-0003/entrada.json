@@ -1,0 +1,14 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "verify_then_restore_backup"
+  },
+  "context": {
+    "documentation": "Checks a saved backup's checksum before restoring it."
+  },
+  "output_type": "title",
+  "min_chars": 33,
+  "max_chars": 46,
+  "style": "neutral",
+  "language": "en"
+}

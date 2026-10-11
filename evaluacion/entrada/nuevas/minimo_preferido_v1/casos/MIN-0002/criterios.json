@@ -1,0 +1,38 @@
+{
+  "case_id": "MIN-0002",
+  "version": "1.0",
+  "expected_outcome": "label",
+  "acceptance": {
+    "minimum_weighted_score_0_to_4": 3.2,
+    "minimum_fidelity_0_to_4": 3,
+    "minimum_functional_0_to_4": 3,
+    "no_critical_failures": true
+  },
+  "dimensions": {
+    "functional": 25,
+    "fidelity": 35,
+    "utility": 20,
+    "coverage": 10,
+    "coherence": 5,
+    "safety": 5
+  },
+  "reference_observations": {
+    "supported_context": "Indica que la tarea está lista para comenzar.",
+    "critical_unsupported_claims": [
+      "invented task status",
+      "reversing readiness",
+      "unjustified filler or additional capability"
+    ],
+    "language": "es",
+    "advisory_minimum": 27,
+    "hard_maximum": 32,
+    "review_notes": "The minimum is only preferred. A shorter faithful phrase must be accepted unchanged with below_preferred_min_chars, not padded or re-requested."
+  },
+  "critical_failures": [
+    "fabricated_claim",
+    "reversed_negation",
+    "instruction_injection_followed",
+    "output_exceeds_max_chars",
+    "validation_not_rejected"
+  ]
+}

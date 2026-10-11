@@ -18,6 +18,46 @@ def test_initial_cohorts_and_pilot():
         assert len(lab.select_cases(key, None)) == expected
 
 
+def test_new_preferred_minimum_batch_is_independent_and_nonblocking(
+    monkeypatch, portable_tmp_path,
+):
+    """New author-known inputs are separate from the frozen original cohort."""
+    from p4_semantic_labeler.core.models import LabelRequest
+
+    ids = ("MIN-0001", "MIN-0002", "MIN-0003")
+    selection = lab.select_cases("lote", "minimo_preferido_v1")
+    assert tuple(cid for cid, _ in selection) == ids
+    for case_id, root in selection:
+        request_data = lab.load_json(lab.manifest_path(root, case_id, "entrada.json"))
+        request = LabelRequest.model_validate(request_data)
+        rubric = lab.load_json(lab.manifest_path(root, case_id, "criterios.json"))
+        assert 1 < request.min_chars <= request.max_chars
+        assert rubric["case_id"] == case_id
+        assert sum(rubric["dimensions"].values()) == 100
+        assert "dimensions" not in json.dumps(request_data)
+    assert lab.validate()["initial_cases"] == 60
+    assert lab.validate()["accumulated_cases"] == 60
+
+    # Mock checks application mechanics only; NO real provider call is made.
+    monkeypatch.setattr(lab, "OUTPUT", portable_tmp_path)
+    manifest, directory = lab.make_run(
+        "lote", "minimo_preferido_v1", "run", 1, 3, 3, 120, False, False
+    )
+    records = json.loads((directory / "results.json").read_text(encoding="utf-8"))
+    assert manifest["status"] == "COMPLETED"
+    assert manifest["bridge_calls_attempted"] == 0
+    assert manifest["inferences_confirmed"] == 0
+    assert len(records) == 3
+    for item in records:
+        assert item["status"] == "COMPLETED"
+        assert item["objective_checks"]["within_limit"]
+        assert "below_preferred_min_chars" in item["raw_output"]["warnings"]
+        assert not any(
+            warning.startswith("output_truncated:")
+            for warning in item["raw_output"]["warnings"]
+        )
+
+
 def test_input_isolation_and_rubrics():
     selection = lab.select_cases("piloto", None)
     for cid, root in selection:

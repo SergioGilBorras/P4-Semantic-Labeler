@@ -122,7 +122,43 @@ implicitly use `min_chars=1`. To test a meaningful advisory minimum,
 create a new versioned batch of inputs with explicit `min_chars`, rather than
 editing the baseline or claiming historical runs used a new constraint.
 
-## Retention and cleanup
+## Versioned experiment: preferred minimum V1
+
+The independent, author-known batch `minimo_preferido_v1` is registered at
+`entrada/nuevas/minimo_preferido_v1/` with **three new cases** and frozen
+rubrics. It is not included in the original 60-case baseline or in accumulated
+regression until its first evaluation is assessed and incorporation is explicit.
+
+| Case | Preferred min | Hard max | Main assessment |
+|---|---:|---:|---|
+| `MIN-0001` | 22 | 30 | Name the median operation directly, not as "not mean" |
+| `MIN-0002` | 27 | 32 | Short, accurate ready-state label is **allowed** with an informational warning |
+| `MIN-0003` | 33 | 46 | Check checksum **before** restoring the backup |
+
+From the repository root on Windows, use the following non-billable dry
+preparation and mock smoke test:
+
+```powershell
+& .\.venv\Scripts\python.exe -m evaluacion.herramientas.lab prepare --set lote --batch minimo_preferido_v1 --max-cases 3 --max-calls 3
+.\evaluacion\run-evaluation-batch.ps1 -SetName lote -Batch minimo_preferido_v1 -MaxCases 3 -MaxCalls 3
+```
+
+Real inference, **only with explicit authorization** (up to six actual
+Codex calls for three labels including at most one optional overlength
+rewrite each):
+
+```powershell
+.\evaluacion\run-evaluation-batch.ps1 -SetName lote -Batch minimo_preferido_v1 -Repetitions 1 -ReductionAttempts 1 -MaxCases 3 -MaxCalls 6 -Real -ApproveReal
+```
+
+Do not re-run automatically on a non-successful status; inspect the report
+and preserve all new run IDs in `evaluation-retention.json`. A label below
+the preferred minimum stays `COMPLETED` if other checks pass; inspect
+`below_preferred_min_chars` and the provider warning, and assess semantic
+fidelity independently. A prompt-only preference is not a guarantee that
+Codex will avoid filler; the rubric must address that manually.
+
+## Retention and cleanup## Retention and cleanup
 
 Edit **`evaluacion/evaluation-retention.json`** and add or remove exact `run_id` values in `keep_run_ids`. They must match the directory names under `evaluacion/salida/`. The checked-in file initially protects the known successful real pilots and a diagnostic failure from 2026-10-10. This JSON is a user-maintained policy; review changes before committing because your local run IDs may differ.
 

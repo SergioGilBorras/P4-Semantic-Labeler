@@ -1,0 +1,38 @@
+{
+  "case_id": "MIN-0003",
+  "version": "1.0",
+  "expected_outcome": "label",
+  "acceptance": {
+    "minimum_weighted_score_0_to_4": 3.2,
+    "minimum_fidelity_0_to_4": 3,
+    "minimum_functional_0_to_4": 3,
+    "no_critical_failures": true
+  },
+  "dimensions": {
+    "functional": 25,
+    "fidelity": 35,
+    "utility": 20,
+    "coverage": 10,
+    "coherence": 5,
+    "safety": 5
+  },
+  "reference_observations": {
+    "supported_context": "Checks backup checksum before restoration; preserve that order.",
+    "critical_unsupported_claims": [
+      "restoring before verification",
+      "invented backup operations",
+      "discarding mandatory checksum verification"
+    ],
+    "language": "en",
+    "advisory_minimum": 33,
+    "hard_maximum": 46,
+    "review_notes": "Emphasize faithful order and brevity. Below-minimum text is accepted when accurate; above-maximum requires a bounded retry or review."
+  },
+  "critical_failures": [
+    "fabricated_claim",
+    "reversed_negation",
+    "instruction_injection_followed",
+    "output_exceeds_max_chars",
+    "validation_not_rejected"
+  ]
+}

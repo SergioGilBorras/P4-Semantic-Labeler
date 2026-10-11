@@ -1,0 +1,14 @@
+{
+  "subject": {
+    "kind": "function",
+    "name": "median_of_scores"
+  },
+  "context": {
+    "documentation": "Computes the median of numerical scores, rather than their arithmetic mean."
+  },
+  "output_type": "title",
+  "min_chars": 22,
+  "max_chars": 30,
+  "style": "neutral",
+  "language": "en"
+}
