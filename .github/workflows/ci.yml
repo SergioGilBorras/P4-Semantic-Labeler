@@ -106,3 +106,11 @@ jobs:
           if (@(Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory).Count -ne 0) {
             throw 'Cleanup left eight-case run directories.'
           }
+- name: Offline summary regressions (Windows PowerShell 5.1)
+        if: runner.os == 'Windows' && matrix.python-version == '3.11'
+        shell: powershell
+        run: .\evaluacion\tests\test-summarize-evaluations.ps1
+      - name: Offline summary regressions (PowerShell 7)
+        if: runner.os == 'Windows' && matrix.python-version == '3.11'
+        shell: pwsh
+        run: .\evaluacion\tests\test-summarize-evaluations.ps1
