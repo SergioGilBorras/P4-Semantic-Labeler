@@ -1,0 +1,14 @@
+{
+  "subject": {
+    "kind": "condition",
+    "name": "task_is_ready"
+  },
+  "context": {
+    "documentation": "Indicates that the task is ready to begin."
+  },
+  "output_type": "title",
+  "min_chars": 27,
+  "max_chars": 32,
+  "style": "neutral",
+  "language": "es"
+}
