@@ -227,6 +227,11 @@ def make_run(which: str, batch: str | None, mode: str, repetitions: int, max_cas
         "input_sha256": input_hashes, "repetitions": repetitions,
         "provider_requested": "codex" if real else "mock",
         "model_requested": "provider_default" if real else "none",
+        # Fingerprint the exact prompt used so before/after runs can be
+        # compared without copying prompts or modifying historical evidence.
+        "prompt_system_sha256": record_sha(
+            ROOT.parent / "src" / "p4_semantic_labeler" / "prompts" / "label_system.txt"
+        ),
         "model_effective": "NO_DISPONIBLE", "tokens": "NO_DISPONIBLE",
         "cost": "NO_DISPONIBLE", "timeout_seconds": timeout,
         "max_calls": max_calls, "real_authorization": real and consent,
