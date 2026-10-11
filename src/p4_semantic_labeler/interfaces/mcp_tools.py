@@ -28,7 +28,7 @@ class MCPTools:
             subject=Subject(name=name, kind=kind),
             context=Context(documentation=documentation, source_code=source_code),
             output_type="title", min_chars=min_chars,
-            min_chars=min_chars, max_chars=max_chars, style=style, language=language,
+            max_chars=max_chars, style=style, language=language,
         )
         return (await self.labeler.agenerate(req)).model_dump()
 
@@ -65,6 +65,7 @@ class MCPTools:
         context = Context(**({"source_code": data} if filename.endswith(".py") else {"text": data}))
         req = LabelRequest(
             subject=Subject(kind="document", name=name), context=context,
-            output_type="summary", max_chars=max_chars, style=style, language=language,
+            output_type="summary", min_chars=min_chars,
+            max_chars=max_chars, style=style, language=language,
         )
         return (await self.labeler.agenerate(req)).model_dump()
