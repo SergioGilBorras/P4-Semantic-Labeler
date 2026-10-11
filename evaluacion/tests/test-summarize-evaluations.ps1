@@ -13,7 +13,7 @@ $outputRoot = Join-Path $scriptRoot 'salida'
 [void](New-Item -ItemType Directory -Path $outputRoot -Force)
 $summaryScript = Join-Path $scriptRoot 'summarize-evaluations.ps1'
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\summarize-evaluations.ps1') -Destination $summaryScript
-$encoding = New-Object System.Text.UTF8Encoding($false)
+$encoding = [System.Text.UTF8Encoding]::new($false)
 
 function Add-FixtureRun {
     param(
