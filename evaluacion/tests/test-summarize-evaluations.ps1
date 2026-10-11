@@ -45,7 +45,12 @@ function Add-FixtureRun {
             (ConvertTo-Json -InputObject $manifest -Depth 10), $encoding)
     }
     if ($null -eq $LiteralResults) {
-        $body = ConvertTo-Json -InputObject @($Results) -Depth 15
+        # Explicitly construct a JSON array: Windows PowerShell 5.1 does not
+        # consistently preserve object[] when bound to ConvertTo-Json -InputObject.
+        $serializedRows = @($Results | ForEach-Object {
+            ConvertTo-Json -InputObject $_ -Depth 15 -Compress
+        })
+        $body = '[' + ($serializedRows -join ',') + ']'
     } else {
         $body = $LiteralResults
     }
