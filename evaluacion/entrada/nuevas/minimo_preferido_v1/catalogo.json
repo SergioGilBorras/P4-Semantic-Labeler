@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "status": "author_known_experimental_not_blind",
+  "objective": "Evaluate advisory per-request min_chars and strict max_chars without changing the original 60-case baseline",
+  "cases": [
+    {
+      "id": "MIN-0001",
+      "version": "1.0",
+      "purpose": "Positive naming of median computation under a preferred length range",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity",
+        "length_preference"
+      ],
+      "category": "function"
+    },
+    {
+      "id": "MIN-0002",
+      "version": "1.0",
+      "purpose": "Accept accurate very short ready-state label below preferred minimum",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity",
+        "length_preference"
+      ],
+      "category": "condition"
+    },
+    {
+      "id": "MIN-0003",
+      "version": "1.0",
+      "purpose": "Preserve order of backup verification and restore within bounds",
+      "task_type": "title",
+      "complexity": "low",
+      "risk": [
+        "semantic_fidelity",
+        "length_preference"
+      ],
+      "category": "function"
+    }
+  ]
+}
