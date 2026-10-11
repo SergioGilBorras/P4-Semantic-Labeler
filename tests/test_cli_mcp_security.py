@@ -33,6 +33,17 @@ def test_cli_label_file_json(portable_tmp_path):
     assert parsed["char_count"] == 9
 
 
+def test_cli_short_label_below_soft_minimum_succeeds_without_padding():
+    response = run_cli(
+        "label", "--name", "calculate_median", "--kind", "function",
+        "--min-chars", "25", "--max-chars", "30", "--json",
+    )
+    assert response.returncode == 0, response.stderr
+    result = json.loads(response.stdout)
+    assert result["label"] == "calculate median"
+    assert "below_preferred_min_chars" in result["warnings"]
+
+
 def test_cli_stdin_and_batch():
     result = run_cli("label", "--name", "has_access", "--stdin", input="Access is denied")
     assert result.returncode == 0 and result.stdout.strip() == "has access"
@@ -104,6 +115,14 @@ async def test_mcp_handler_tools_and_roots(settings, portable_tmp_path):
         await handler.summarize_file(str(f), name="document"),
     ):
         assert result["char_count"] == len(result["label"])
+    short = await handler.generate_label("short", min_chars=20, max_chars=35)
+    assert short["label"] == "short"
+    assert "below_preferred_min_chars" in short["warnings"]
+    short_summary = await handler.generate_summary(
+        "brief_note", text="Short summary", min_chars=25, max_chars=35
+    )
+    assert short_summary["label"] == "brief note"
+    assert "below_preferred_min_chars" in short_summary["warnings"]
     batch = await handler.generate_labels_batch([{"subject": {"name": "alpha_beta"}}])
     assert batch["success_count"] == 1
     with pytest.raises(RequestValueError):
