@@ -28,6 +28,20 @@ function Test-NoReparsePoints([string]$Path) {
     return $true
 }
 
+function Test-IsAccessDenied([System.Management.Automation.ErrorRecord]$Record) {
+    if ($Record.CategoryInfo.Category -eq [System.Management.Automation.ErrorCategory]::PermissionDenied) {
+        return $true
+    }
+    $exception = $Record.Exception
+    while ($null -ne $exception) {
+        if ($exception -is [System.UnauthorizedAccessException]) {
+            return $true
+        }
+        $exception = $exception.InnerException
+    }
+    return $false
+}
+
 if (-not (Test-Path -LiteralPath $policyPath -PathType Leaf)) {
     throw 'Missing evaluation-retention.json.'
 }
@@ -57,44 +71,51 @@ $candidates = 0
 $skipped = 0
 foreach ($directory in @(Get-ChildItem -LiteralPath $output.FullName -Directory -Force | Sort-Object Name)) {
     $reason = $null
-    if (($directory.Attributes -band $reparse) -ne 0) {
-        $reason = 'reparse point'
-    } elseif ($directory.Name -cnotmatch $runPattern) {
-        $reason = 'unrecognized name'
-    } elseif ($protected.Contains($directory.Name)) {
-        $reason = 'protected by JSON'
-    } elseif ($directory.LastWriteTimeUtc -gt $cutoff) {
-        $reason = 'too recent'
-    } else {
-        $manifestPath = Join-Path $directory.FullName 'manifest.json'
-        if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
-            $reason = 'missing manifest'
+    try {
+        if (($directory.Attributes -band $reparse) -ne 0) {
+            $reason = 'reparse point'
+        } elseif ($directory.Name -cnotmatch $runPattern) {
+            $reason = 'unrecognized name'
+        } elseif ($protected.Contains($directory.Name)) {
+            $reason = 'protected by JSON'
+        } elseif ($directory.LastWriteTimeUtc -gt $cutoff) {
+            $reason = 'too recent'
         } else {
-            $manifestFile = Get-Item -LiteralPath $manifestPath -Force
-            if (($manifestFile.Attributes -band $reparse) -ne 0) {
-                $reason = 'manifest is a reparse point'
+            $manifestPath = Join-Path $directory.FullName 'manifest.json'
+            if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+                $reason = 'missing manifest'
             } else {
+                $manifestFile = Get-Item -LiteralPath $manifestPath -Force
+                if (($manifestFile.Attributes -band $reparse) -ne 0) {
+                    $reason = 'manifest is a reparse point'
+                } else {
+                    try {
+                        $manifest = Get-Content -LiteralPath $manifestPath -Encoding UTF8 -Raw | ConvertFrom-Json
+                        if ($manifest.run_id -cne $directory.Name -or
+                            $manifest.artifacts_disposable -ne $true -or
+                            @('COMPLETED', 'COMPLETED_WITH_ERRORS') -cnotcontains $manifest.status) {
+                            $reason = 'manifest not eligible'
+                        }
+                    } catch {
+                        $reason = 'unreadable manifest'
+                    }
+                }
+            }
+            if (-not $reason) {
                 try {
-                    $manifest = Get-Content -LiteralPath $manifestPath -Encoding UTF8 -Raw | ConvertFrom-Json
-                    if ($manifest.run_id -cne $directory.Name -or
-                        $manifest.artifacts_disposable -ne $true -or
-                        @('COMPLETED', 'COMPLETED_WITH_ERRORS') -cnotcontains $manifest.status) {
-                        $reason = 'manifest not eligible'
+                    if (-not (Test-NoReparsePoints $directory.FullName)) {
+                        $reason = 'tree contains a reparse point'
                     }
                 } catch {
-                    $reason = 'unreadable manifest'
+                    $reason = 'tree cannot be safely inspected'
                 }
             }
         }
-        if (-not $reason) {
-            try {
-                if (-not (Test-NoReparsePoints $directory.FullName)) {
-                    $reason = 'tree contains a reparse point'
-                }
-            } catch {
-                $reason = 'tree cannot be safely inspected'
-            }
+    } catch {
+        if (-not (Test-IsAccessDenied $_)) {
+            throw
         }
+        $reason = 'access denied'
     }
     if ($reason) {
         $skipped++

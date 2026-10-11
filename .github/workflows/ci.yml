@@ -42,6 +42,41 @@ jobs:
           if (-not (Test-Path -LiteralPath $reportPath)) { throw 'Missing consolidated report' }
           $report = Get-Content -LiteralPath $reportPath -Encoding UTF8 -Raw | ConvertFrom-Json
           if ($report.totals.runs -ne 1 -or $report.totals.completed_results -ne 1) { throw 'Incorrect report totals' }
+          # Mock a protected historical manifest: do not change real Windows ACLs.
+          $global:AccessDeniedManifest = Join-Path (Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory | Select-Object -First 1).FullName 'manifest.json'
+          function global:Test-Path {
+            param([string]$LiteralPath, [string]$PathType)
+            if ($LiteralPath -ceq $global:AccessDeniedManifest) {
+              throw [System.UnauthorizedAccessException]::new('simulated access denied')
+            }
+            if ($PSBoundParameters.ContainsKey('PathType')) {
+              Microsoft.PowerShell.Management\Test-Path -LiteralPath $LiteralPath -PathType $PathType
+            } else {
+              Microsoft.PowerShell.Management\Test-Path -LiteralPath $LiteralPath
+            }
+          }
+          try {
+            & .\evaluacion\summarize-evaluations.ps1
+            $partial = Get-Content -LiteralPath $reportPath -Encoding UTF8 -Raw | ConvertFrom-Json
+            if ($partial.complete -ne $false -or $partial.totals.runs -ne 0 -or
+                $partial.totals.skipped_directories -ne 1 -or
+                $partial.skipped[0].reason -ne 'access_denied') {
+              throw 'Access-denied run was not safely reported as skipped.'
+            }
+            # Even with -Apply, an inaccessible run must never be deleted.
+            & .\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0 -Apply
+            if (@(Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory).Count -ne 1) {
+              throw 'Cleanup removed or failed to preserve the protected mock run.'
+            }
+          } finally {
+            Remove-Item -LiteralPath Function:\Test-Path -ErrorAction SilentlyContinue
+            Remove-Variable AccessDeniedManifest -Scope Global -ErrorAction SilentlyContinue
+          }
+          & .\evaluacion\summarize-evaluations.ps1
+          $restored = Get-Content -LiteralPath $reportPath -Encoding UTF8 -Raw | ConvertFrom-Json
+          if ($restored.complete -ne $true -or $restored.totals.runs -ne 1) {
+            throw 'Normal run was not restored after the mock failure.'
+          }
           & .\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0
           if (@(Get-ChildItem -LiteralPath '.\evaluacion\salida' -Directory).Count -ne 1) { throw 'Unexpected run directory' }
           & .\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0 -Apply
