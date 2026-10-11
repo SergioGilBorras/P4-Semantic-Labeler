@@ -51,6 +51,10 @@ def test_run_manifest_fingerprints_active_system_prompt(monkeypatch, portable_tm
     assert manifest["prompt_system_sha256"] == expected
     persisted = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
     assert persisted["prompt_system_sha256"] == expected
+    reduction_file = prompt_file.with_name("label_reduction.txt")
+    reduction_hash = hashlib.sha256(reduction_file.read_bytes()).hexdigest()
+    assert manifest["prompt_reduction_sha256"] == reduction_hash
+    assert persisted["prompt_reduction_sha256"] == reduction_hash
     assert manifest["observed_calls"] == 0
     assert manifest["inferences_confirmed"] == 0
 
