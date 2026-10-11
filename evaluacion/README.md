@@ -41,6 +41,26 @@ Run these commands from the repository root with the project's `.venv` installed
 
 `summarize-evaluations.ps1` scans final runs under `evaluacion/salida/`, and writes **`evaluacion/salida/evaluation-summary.json`**. That single file contains run metadata, case IDs, labels, character counts, objective checks, and safe structured diagnostics. It excludes raw prompts, case input content, rubrics and raw provider output objects. It records skipped/incomplete runs rather than silently interpreting them as success. A multi-case `results.json` is parsed as a JSON array and each case is reported separately; structurally malformed runs are skipped with `malformed_results` instead of interrupting other runs. The report includes `complete: false` when any recognized run was skipped (including `access_denied` for a protected manifest). An access-denied directory does not prevent the accessible runs from being summarized; however, the resulting JSON is **partial** and must not be treated as a complete evaluation of the folder. It never repairs ACLs or deletes unreadable directories. Inspect the summary's `skipped` entries before sharing or scoring results, and investigate access permissions separately. Batch execution updates this file automatically, including after a failed attempt where possible.
 
+## Truncated labels and semantic review
+
+The production service may return a label truncated to the character limit, with
+`output_truncated: meaning may be incomplete` in `raw_output.warnings`. The
+evaluation laboratory deliberately sets `reduction_attempts=0` so the approved
+call budget cannot silently grow. A truncated label is **not** automatic evidence
+of semantic acceptance: for **new** runs, the result is recorded as
+`SEMANTIC_REVIEW_REQUIRED` (the manifest becomes `COMPLETED_WITH_ERRORS`);
+the original label and warning are preserved, and no retry is attempted. The
+batch launcher consequently reports `evaluation_success=False` even when
+`report_success=True`.
+
+Historical `results.json` and manifests are never rewritten. The consolidated
+report exposes `needs_semantic_review: true` per result and
+`totals.results_requiring_review` for both historical and new truncations;
+arbitrary provider warnings are not copied into the shareable report.
+`complete: true` only says all remaining recognized run folders were read,
+**not** that every label passed its semantic rubric. A separate evaluator
+must assess fidelity and other quality criteria manually.
+
 ## Retention and cleanup
 
 Edit **`evaluacion/evaluation-retention.json`** and add or remove exact `run_id` values in `keep_run_ids`. They must match the directory names under `evaluacion/salida/`. The checked-in file initially protects the known successful real pilots and a diagnostic failure from 2026-10-10. This JSON is a user-maintained policy; review changes before committing because your local run IDs may differ.

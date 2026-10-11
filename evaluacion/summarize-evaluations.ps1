@@ -42,6 +42,7 @@ $skipped = New-Object 'System.Collections.Generic.List[object]'
 $itemCount = 0
 $successCount = 0
 $errorCount = 0
+$reviewCount = 0
 
 foreach ($directory in @(Get-ChildItem -LiteralPath $root.FullName -Directory -Force | Sort-Object Name)) {
     if ($directory.Name -cnotmatch $runPattern) {
@@ -100,10 +101,20 @@ foreach ($directory in @(Get-ChildItem -LiteralPath $root.FullName -Directory -F
             $label = $null
             $charCount = $null
             $provider = $null
+            $needsSemanticReview = $false
             if ($null -ne $item.raw_output) {
                 $label = $item.raw_output.label
                 $charCount = $item.raw_output.char_count
                 $provider = $item.raw_output.provider
+                # Only export this safe, known warning category, never raw
+                # provider output or arbitrary warning strings.
+                foreach ($warning in @($item.raw_output.warnings)) {
+                    if ($warning -is [string] -and
+                        $warning.StartsWith('output_truncated:', [System.StringComparison]::Ordinal)) {
+                        $needsSemanticReview = $true
+                        break
+                    }
+                }
             }
             $rows.Add([pscustomobject]@{
                 case_id = $item.id
@@ -112,6 +123,7 @@ foreach ($directory in @(Get-ChildItem -LiteralPath $root.FullName -Directory -F
                 label = $label
                 char_count = $charCount
                 provider = $provider
+                needs_semantic_review = $needsSemanticReview
                 diagnostic_category = $item.diagnostic_category
                 provider_error_code = $item.provider_error_code
                 objective_checks = $item.objective_checks
@@ -129,6 +141,9 @@ foreach ($directory in @(Get-ChildItem -LiteralPath $root.FullName -Directory -F
                 $successCount++
             } else {
                 $errorCount++
+            }
+            if ($row.needs_semantic_review) {
+                $reviewCount++
             }
         }
         $runs.Add([pscustomobject]@{
@@ -162,6 +177,7 @@ $report = [ordered]@{
         results = $itemCount
         completed_results = $successCount
         other_results = $errorCount
+        results_requiring_review = $reviewCount
         skipped_directories = $skipped.Count
     }
     runs = @($runs.ToArray())

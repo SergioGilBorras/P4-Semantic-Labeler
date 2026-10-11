@@ -107,6 +107,50 @@ def test_mock_run_records_response_without_confirming_real_inference(portable_tm
     assert result["raw_output"]["provider"] == "mock"
 
 
+@pytest.mark.parametrize(
+    "warnings, expected_status, expected_run_status",
+    [
+        ([], "COMPLETED", "COMPLETED"),
+        (
+            ["output_truncated: meaning may be incomplete"],
+            "SEMANTIC_REVIEW_REQUIRED",
+            "COMPLETED_WITH_ERRORS",
+        ),
+    ],
+)
+def test_truncated_label_requires_manual_review_without_extra_calls(
+    monkeypatch, portable_tmp_path, warnings, expected_status, expected_run_status
+):
+    """Test length fallback offline with a stub; never invoke the real provider."""
+    from p4_semantic_labeler.core.models import LabelResult
+
+    class OfflineLabeler:
+        async def agenerate(self, request):
+            label = "Caché vencida: renovar antes de"
+            return LabelResult(
+                label=label, char_count=len(label), language=request.language,
+                style=request.style, output_type=request.output_type,
+                provider="mock", warnings=warnings,
+            )
+
+    monkeypatch.setattr(lab, "OUTPUT", portable_tmp_path)
+    monkeypatch.setattr(
+        "p4_semantic_labeler.core.service.Labeler",
+        lambda settings: OfflineLabeler(),
+    )
+    manifest, directory = lab.make_run(
+        "piloto", None, "run", 1, 1, 1, 120, False, False, case_id="SL-0002"
+    )
+    result = json.loads((directory / "results.json").read_text(encoding="utf-8"))[0]
+    assert result["status"] == expected_status
+    assert result["raw_output"]["warnings"] == warnings
+    assert all(result["objective_checks"].values())
+    assert manifest["status"] == expected_run_status
+    assert manifest["observed_calls"] == 1
+    assert manifest["bridge_calls_attempted"] == 0
+    assert manifest["inferences_confirmed"] == 0
+
+
 def test_lab_error_diagnostics_allow_only_known_codes():
     error = RuntimeError("private provider message")
     error.diagnostic_category = "UNKNOWN"
