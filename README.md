@@ -188,11 +188,13 @@ ruff check .
 
 CI runs pytest and Ruff on Windows and Ubuntu with Python 3.11, 3.12 and 3.13. CI uses only mock and bridge contract test doubles, never actual Codex inference. Tests cover core constraints, Unicode, context, prompt boundaries, API, CLI, batching, errors, timeouts and MCP tool handlers. An SDK-level MCP registration test runs when the official MCP extra is installed; it is skipped otherwise.
 
-## Roadmap
+## Estado de V1
 
-- **V1:** authenticated Codex smoke validation, improved token accounting and semantic quality tests.
-- **V2:** additional AI providers, optional caching and batch observability.
-- **V3:** optional IDE/document integrations and additional formats.
+El corpus original de **60 casos** se ha ejecutado conforme a su finalidad: 58 casos de etiquetado con Codex real y dos rechazos de validación. La evaluación histórica se ha consolidado, con incidencias y limitaciones semánticas conocidas; esto **no implica un 100 % de aprobación semántica** ni acredita rendimiento de producción.
+
+Consultar el [informe de evaluación y cierre de alcance V1](docs/v1-evaluacion-y-cierre.md). La expresión «V1» designa el hito funcional; la versión del paquete en `pyproject.toml` continúa siendo `0.1.0`. La publicación y la comprobación de CI del commit final están pendientes.
+
+No se prevén fases adicionales de desarrollo (V2/V3) dentro de este cierre.
 
 ## License
 
