@@ -82,7 +82,7 @@ def create_app(labeler: Labeler | None = None, settings: Settings | None = None)
     settings = settings or (labeler.settings if labeler is not None else Settings.from_env())
     labeler = labeler or Labeler(settings=settings)
     app = FastAPI(
-        title="P4 Semantic Labeler", version="0.1.0",
+        title="P4 Semantic Labeler", version="0.1.1",
         description="Contextual label generation; mock mode is NOT a semantic AI provider.",
     )
     app.add_middleware(BodyLimitMiddleware, max_bytes=settings.max_request_bytes)

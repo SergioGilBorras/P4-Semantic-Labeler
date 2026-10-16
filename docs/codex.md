@@ -1,28 +1,40 @@
 # Codex provider
 
-Set `P4_LABELER_PROVIDER=codex` and install the optional integration using the labeler's pip extra from this repository checkout:
+P4-Semantic-Labeler integrates with the official Codex CLI through the Python package [P4-Codex-Bridge](https://github.com/SergioGilBorras/P4-Codex-Bridge). This integration is **optional** and activates only when `P4_LABELER_PROVIDER=codex`.
+
+## Install and configure
+
+Use the Python interpreter that runs P4; Git must be installed to resolve the exact GitHub-source dependencies.
 
 ```bash
 python -m pip install -e '.[codex]'
 python -m pip check
+codex login
 ```
 
-This extra pins P4-Codex-Bridge **1.2.0** to immutable commit `082705a0fb797d80d1010c6ead9b5dd2b3e69da4`, and the main dependencies pin portable-tempdirs **0.1.2** to `fd6dbd640630e6911a53b4d756089099ec870a8b`. The Bridge pins that *same* portable-tempdirs commit, avoiding mismatched source requirements. These are reviewed, immutable commit pins rather than floating branch references; Bridge and the direct dependency use the same portable-tempdirs revision. These packages must be installed into the **same interpreter** used by Semantic-Labeler. CI checks their installed metadata and public APIs without invoking Codex CLI.
+On Windows PowerShell: `$env:P4_LABELER_PROVIDER = "codex"`. The Bridge uses the official CLI's existing login; P4 does not store Codex credentials or require a separate API key for this integration.
 
-The bridge remains an optional runtime integration: it is imported only for Codex requests, and the Python library and mock provider do not require it. The adapter requires Bridge 1.2.0 or later because it explicitly supplies `ephemeral=True`.
+Current source pins used in `pyproject.toml`:
 
-`cwd` is the working directory in which the Codex CLI process runs; it does not specify the bridge's state storage. **Every provider request creates a new `CodexBridge` instance and invokes a fresh, one-shot `CodexBridge.run()` execution.** No bridge instance, thread or managed filesystem workspace is reused for a later label request, including retries and concurrent batch items.
+| Package | Installed version | Verified source commit |
+|---|---|---|
+| [P4-Codex-Bridge](https://github.com/SergioGilBorras/P4-Codex-Bridge) | **1.4.1** | `a7e21c83670df925c478696c078d1cdc46fa3a9b` |
+| [portable-tempdirs](https://github.com/SergioGilBorras/portable-tempdirs) | **0.1.2** | `aad3878ccd8347a1a23faf609b2db21265d30a1d` |
 
-For each request, the adapter uses `portable-tempdirs` as a context manager to create a unique temporary run directory containing separate `workspace` and `bridge-state` children. The managed workspace starts empty; the adapter passes `skip_git_repo_check=True`, which only bypasses the CLI Git-repository check and does not create a repository or relax sandbox permissions. The state directory is not added to `allowed_roots`. **After the synchronous bridge call has finished (success or failure), the adapter attempts identity-checked cleanup of the entire run tree.** It does not call `detach()`; that feature is available for other consumers that deliberately need persistent directories. The namespace container under the system temporary root may remain. If cleanup fails because of permissions or file sharing, a sanitized failure is reported and some files may remain; there is no unsafe deletion fallback.
+Bridge and P4 require the **same portable-tempdirs Git commit**. These are immutable source dependencies, not floating `main` references. External model availability is controlled by the installed Codex CLI and account.
 
-If `P4_LABELER_CODEX_WORKSPACE` names an existing external directory, each request still gets a fresh `CodexBridge` and a new temporary `bridge-state`, but the *external directory is reused by explicit configuration*. The adapter never deletes or clears that directory, uses `skip_git_repo_check=False`, and cannot guarantee that external files, repository instructions or `AGENTS.md` will not affect later requests. For maximum filesystem-context separation, leave this setting unset.
+## Execution isolation
 
-The adapter sets `profile="analysis"`, `config_policy="isolated"`, `capture_last_message=True`, `SandboxMode.READ_ONLY`, `ApprovalPolicy.NEVER` and `ephemeral=True`. It passes a combined instruction and JSON reference-data prompt, because `run()` accepts one prompt string rather than separate system/user roles. It consumes the final `RunResult.content` and rejects unsuccessful/empty results. A missing `skip_git_repo_check` capability or a bridge version older than 1.2.0 produces a safe capability diagnostic before a provider call.
+Each labeling request constructs a new `CodexBridge` and invokes its public `run()` API for a one-shot request; provider instances are not reused across labels. Each request gets a unique managed temporary tree with independent `workspace` and `bridge-state` directories. P4 attempts identity-checked cleanup on exit and reports sanitized errors if cleanup fails; it does not delete external user directories.
 
-In either mode, `allowed_roots` contains only the selected workspace; bridge state is never included. Protect an external workspace and avoid untrusted Codex configuration or `AGENTS.md` there. Input source code is included as **prompt text**, never written to the working directory or executed by this service.
+If `P4_LABELER_CODEX_WORKSPACE` is explicitly set, that existing directory is used as the working directory and **is not deleted**. Its contents and repository instructions may influence future requests. Leave the setting unset when an isolated temporary workspace is preferable.
 
-**External MCP risk:** inherited MCP tools are not isolated by the temporary workspace, `skip_git_repo_check`, or the filesystem sandbox. An external MCP can cause side effects even with read-only filesystem permissions. The adapter therefore passes `RunSecurityPolicy(project_trust=TRUSTED, allow_external_mcps=True, allow_side_effect_mcps=True, explicit_risk_acknowledgement=True)` when a user selects Codex. This acknowledges the risk; it does not provide MCP isolation or guarantee that external MCP tools are read-only. Operators must control which MCP servers their Codex installation exposes.
+The adapter sets a read-only filesystem sandbox, no interactive approval, isolated configuration, output capture and the Bridge's default ephemeral mode. The managed empty workspace bypasses only the CLI Git-repository check (`skip_git_repo_check=True`); this is not a sandbox escape and does not change MCP access.
 
-The bridge uses the Codex CLI's existing authentication. This project stores no Codex credentials. `P4_LABELER_PROVIDER_TIMEOUT` is forwarded to bridge calls; service-side async timeout cannot always terminate an already running thread immediately, although the bridge also enforces its own process timeout.
+## Security and limitations
 
-The integration is covered by mocked public-interface tests. Real inference requires Codex CLI login and availability; CI does not run live, paid inference. `GET /health` only confirms the labeler process is alive, not Codex availability.
+Codex receives the selected source/document context as untrusted prompt text. The Bridge accepts one combined prompt string, so it does not provide independently enforced system/user role isolation. **Inherited external MCP tools may still cause side effects, even in read-only filesystem mode.** P4 explicitly acknowledges that risk in the Bridge security policy; operators remain responsible for controlling the Codex CLI configuration and any inherited MCP servers.
+
+Provider calls are subject to `P4_LABELER_PROVIDER_TIMEOUT`. Timeout of P4's asynchronous wrapper may not immediately terminate a worker thread, although the Bridge enforces an execution timeout. `GET /health` checks process liveness, not CLI/model readiness. P4's CI uses the installed Bridge's public API and test doubles; it never consumes real inference.
+
+See [Architecture](architecture.md), [Security policy](../SECURITY.md), [Distribution](distribution.md).

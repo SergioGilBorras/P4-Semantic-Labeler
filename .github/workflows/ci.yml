@@ -11,7 +11,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         python-version: ['3.11', '3.12', '3.13']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Offline summary regressions (Windows PowerShell 5.1)
         if: runner.os == 'Windows' && matrix.python-version == '3.11'
         shell: powershell
@@ -20,13 +20,28 @@ jobs:
         if: runner.os == 'Windows' && matrix.python-version == '3.11'
         shell: pwsh
         run: .\evaluacion\tests\test-summarize-evaluations.ps1
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install -e '.[dev,codex]'
       - run: python -m pip check
       - run: ruff check .
       - run: pytest -q
+      - name: Build wheel and smoke-test clean installation (Ubuntu Python 3.11)
+        if: runner.os == 'Linux' && matrix.python-version == '3.11'
+        run: |
+          python -m pip install build
+          python -m build --wheel --outdir dist
+          python -m venv .package-venv
+          .package-venv/bin/python -m pip install "dist/p4_semantic_labeler-0.1.1-py3-none-any.whl"
+          .package-venv/bin/python -m pip check
+          .package-venv/bin/python -c "from importlib import metadata, resources; from p4_semantic_labeler import Labeler, LabelRequest, Subject; from p4_semantic_labeler.config import Settings; import p4_semantic_labeler; assert metadata.version('p4-semantic-labeler') == p4_semantic_labeler.__version__ == '0.1.1'; assert resources.files('p4_semantic_labeler.prompts').joinpath('label_system.txt').is_file(); assert metadata.version('portable-tempdirs') == '0.1.2'; r=Labeler(settings=Settings(provider='mock')).generate(LabelRequest(subject=Subject(name='process_pending_orders'),max_chars=45)); assert r.label == 'process pending orders'; print('Wheel smoke test OK')"
+      - uses: actions/upload-artifact@v7
+        if: runner.os == 'Linux' && matrix.python-version == '3.11'
+        with:
+          name: p4-semantic-labeler-wheel-py311
+          path: dist/*.whl
+          if-no-files-found: error
       - name: Verify no managed pytest session directories remain
         if: runner.os == 'Windows'
         shell: powershell

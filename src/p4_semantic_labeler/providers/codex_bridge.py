@@ -1,4 +1,4 @@
-"""P4-Codex-Bridge 1.x adapter using its documented public Python API.
+"""P4-Codex-Bridge 1.4.1 adapter using its documented public Python API.
 
 Only this module imports the bridge. One-shot inference uses a read-only Codex
 workspace; received code/text is passed as prompt data and is never written or
@@ -42,7 +42,7 @@ from p4_semantic_labeler.providers.base import ProviderPrompt, ProviderResponse
 
 class CodexBridgeProvider:
     name = "codex"
-    MINIMUM_BRIDGE_VERSION = (1, 2, 0)
+    MINIMUM_BRIDGE_VERSION = (1, 4, 1)
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings

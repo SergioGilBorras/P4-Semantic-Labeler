@@ -1,4 +1,4 @@
-"""Contract tests: exercise the confirmed P4-Codex-Bridge 1.1 public surface.
+"""Contract tests: exercise the pinned P4-Codex-Bridge 1.4.1 public surface.
 
 These use a facade double so CI never invokes paid/external Codex inference.
 """
@@ -38,7 +38,7 @@ from p4_semantic_labeler.temp_directories import TemporaryDirectoryError
 @pytest.fixture
 def fake_bridge(monkeypatch):
     module = types.ModuleType("p4_codex_bridge")
-    module.__version__ = "1.2.0"
+    module.__version__ = "1.4.1"
     module.SandboxMode = SimpleNamespace(READ_ONLY="read-only")
     module.ApprovalPolicy = SimpleNamespace(NEVER="never")
     module.ProjectTrust = SimpleNamespace(TRUSTED="TRUSTED")

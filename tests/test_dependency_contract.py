@@ -26,7 +26,7 @@ def test_portable_tempdirs_install_and_one_shot_cleanup():
 
 def test_optional_bridge_installed_version_and_public_exec_contract():
     bridge = pytest.importorskip("p4_codex_bridge")
-    assert version("p4-codex-bridge") == bridge.__version__ == "1.2.0"
+    assert version("p4-codex-bridge") == bridge.__version__ == "1.4.1"
 
     params = inspect.signature(bridge.CodexBridge.run).parameters
     assert "skip_git_repo_check" in params
