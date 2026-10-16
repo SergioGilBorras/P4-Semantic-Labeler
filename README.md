@@ -203,13 +203,15 @@ ruff check .
 
 CI runs pytest and Ruff on Windows and Ubuntu with Python 3.11, 3.12 and 3.13. CI uses only mock and bridge contract test doubles, never actual Codex inference. Tests cover core constraints, Unicode, context, prompt boundaries, API, CLI, batching, errors, timeouts and MCP tool handlers. An SDK-level MCP registration test runs when the official MCP extra is installed; it is skipped otherwise.
 
-## Estado de V1
+## V1 status
 
-El corpus original de **60 casos** se ha ejecutado conforme a su finalidad: 58 casos de etiquetado con Codex real y dos rechazos de validación. La evaluación histórica se ha consolidado, con incidencias y limitaciones semánticas conocidas; esto **no implica un 100 % de aprobación semántica** ni acredita rendimiento de producción.
+The original **60-case** evaluation corpus has been exercised according to its purpose: 58 real Codex labeling cases and two negative validation cases. The evaluation history and known semantic limitations are recorded; this is **not** a claim that all labels passed independent semantic review or that production reliability has been established.
 
-Consultar el [informe de evaluación y cierre de alcance V1](docs/v1-evaluacion-y-cierre.md). La expresión «V1» designa el hito funcional; la versión del paquete en `pyproject.toml` continúa siendo `0.1.0`. **Publicación completada:** [GitHub Release v0.1.0](https://github.com/SergioGilBorras/P4-Semantic-Labeler/releases/tag/v0.1.0) apunta al commit `0179888`; sus seis trabajos de CI (Windows y Ubuntu, Python 3.11–3.13) finalizaron correctamente. El cambio de metadatos `820ad5b` se incorporó a `main` **después** de crear ese tag, por lo que no forma parte del contenido inmutable de `v0.1.0`. La Release no contiene todavía un wheel adjunto. Para entregar un paquete que incorpore cambios posteriores al tag será necesario versionarlo, construirlo y validarlo como una nueva publicación. Consulta [Distribución](docs/distribution.md).
+See the [V1 evaluation and scope-closure report](docs/v1-evaluacion-y-cierre.md). **V1** refers to the functional milestone, not to a SemVer `1.0.0` release: `pyproject.toml` still declares package version `0.1.0`.
 
-No se prevén fases adicionales de desarrollo (V2/V3) dentro de este cierre.
+**Published release:** [v0.1.0](https://github.com/SergioGilBorras/P4-Semantic-Labeler/releases/tag/v0.1.0) targets commit `0179888` and passed all six CI jobs (Windows and Ubuntu, Python 3.11–3.13). The later package metadata commit `820ad5b` is **not** part of the immutable `v0.1.0` tag. The release does not yet attach a wheel; any client artifact containing subsequent changes needs a distinct version, a clean build and verification. See [Distribution](docs/distribution.md).
+
+No V2/V3 development phases are planned as part of this V1 closure.
 
 ## License
 

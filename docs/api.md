@@ -40,11 +40,11 @@ Response:
   "style": "technical",
   "output_type": "title",
   "provider": "mock",
-  "warnings": ["mock_provider: synthetic name formatting, not semantic AI"]
+  "warnings": ["mock_provider: synthetic name formatting, not semantic AI", "below_preferred_min_chars"]
 }
 ```
 
-This response is an example **mock-mode** response. In real mode the provider must decide the semantics of `cache_invalid` from context. A bare negation should not be silently inverted. The `char_count` field is the count of Unicode code points in the normalized output.
+The sample label is 13 Unicode code points long, below the requested preferred minimum of 15, so the informational `below_preferred_min_chars` warning is included. This is an example **mock-mode** response. In real mode the provider must decide the semantics of `cache_invalid` from context. A bare negation should not be silently inverted. The `char_count` field is the count of Unicode code points in the normalized output.
 
 ## POST /v1/labels/batch
 
@@ -88,3 +88,15 @@ Returns `{"status":"ok","provider":"mock"}` when process is live, regardless of 
 | 504 | `provider_timeout` | Provider call timeout |
 
 Error bodies do not echo raw input or provider exception strings. HTTP JSON requests can still be observed by infrastructure outside this service (e.g., reverse proxies); configure those separately.
+
+## OpenAPI schema snapshot
+
+The running application exposes the canonical schema at `GET /openapi.json`. The tracked [`docs/openapi.json`](openapi.json) is a snapshot for documentation and tooling; it must be refreshed when request models or HTTP endpoints change. In particular, both `LabelRequest` and the multipart file endpoint accept an optional `min_chars` field (default `1`; advisory).
+
+To regenerate the snapshot from the installed project environment, review the resulting diff, and run the test suite:
+
+```bash
+python -c "import json; from pathlib import Path; from p4_semantic_labeler.interfaces.api import app; Path('docs/openapi.json').write_text(json.dumps(app.openapi(), indent=2, ensure_ascii=False) + '\n', encoding='utf-8')"
+```
+
+OpenAPI describes request and response shapes; operational details such as optional Bearer authentication, rate limits and provider availability are explained in this document and in [Security](../SECURITY.md).
