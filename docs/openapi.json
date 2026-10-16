@@ -307,6 +307,11 @@
             "title": "Output Type",
             "default": "summary"
           },
+          "min_chars": {
+            "type": "integer",
+            "title": "Min Chars",
+            "default": 1
+          },
           "max_chars": {
             "type": "integer",
             "title": "Max Chars",
@@ -495,6 +500,13 @@
             ],
             "title": "Output Type",
             "default": "title"
+          },
+          "min_chars": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Min Chars",
+            "default": 1
           },
           "max_chars": {
             "type": "integer",
