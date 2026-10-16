@@ -14,7 +14,7 @@ python -m evaluacion.herramientas.lab run --set piloto
 python -m evaluacion.herramientas.lab run --set acumulada
 ```
 
-Real inference requires explicit CLI consent, provider codex and a bounded call budget; it is disabled by default. Output directories under `salida/` are disposable but **never automatically deleted**. No semantic quality score is assigned by the runner. Evaluation needs a separate assessor receiving frozen rubric only after production. Run output should not be checked into Git.
+Real inference requires explicit CLI consent, provider codex and a bounded call budget; it is disabled by default. Historical output directories under `salida/` are evaluation evidence, not disposable while subject to the recorded retention policy, and are **never automatically deleted**. No semantic quality score is assigned by the runner. Evaluation needs a separate assessor receiving frozen rubric only after production. Run output should not be checked into Git.
 
 ## Windows PowerShell workflows
 
@@ -158,22 +158,22 @@ the preferred minimum stays `COMPLETED` if other checks pass; inspect
 fidelity independently. A prompt-only preference is not a guarantee that
 Codex will avoid filler; the rubric must address that manually.
 
-## Retention and cleanup## Retention and cleanup
+## Retention and cleanup
 
-Edit **`evaluacion/evaluation-retention.json`** and add or remove exact `run_id` values in `keep_run_ids`. They must match the directory names under `evaluacion/salida/`. The checked-in file initially protects the known successful real pilots and a diagnostic failure from 2026-10-10. This JSON is a user-maintained policy; review changes before committing because your local run IDs may differ.
+Edit **`evaluacion/evaluation-retention.json`** and add or remove exact `run_id` values in `keep_run_ids`. They must match the directory names under `evaluacion/salida/`. At the documented V1 cutoff, the versioned retention list protects **231 unique historical run IDs**. This JSON is a user-maintained policy; review changes before committing because other machines may contain different local run IDs. Do not assume that a directory absent from Git is safe to delete.
 
 ```powershell
 # Preview only (default): shows eligible old runs but deletes nothing.
 .\evaluacion\cleanup-evaluations.ps1
 
-# Delete eligible runs only after inspecting the preview.
+# Destructive operation, documented for maintenance only; do NOT run on the retained V1 evidence.
 .\evaluacion\cleanup-evaluations.ps1 -Apply
 
 # Optional: permit cleanup of runs created less than 60 minutes ago.
 .\evaluacion\cleanup-evaluations.ps1 -MinAgeMinutes 0
 ```
 
-The cleanup tool never removes a protected ID; by default, it skips runs modified in the last hour. It only considers directories with the laboratory's run-name shape, a matching valid manifest, `artifacts_disposable: true`, a final status, and no detected reparse points in the tree. Unknown, incomplete, and access-denied directories are retained, even when using `-Apply`; the script never attempts to bypass ACLs. Without `-Apply` it performs **no deletion**. It deliberately does not remove `salida/` itself or the consolidated JSON file. Shell-based deletion of intentionally persistent laboratory results is **not** the handle-identity-verified cleanup of `portable-tempdirs`; only run it on a trusted local tree with no concurrent writers. Keep evidence that may be needed for batch incorporation, comparison or investigation before applying cleanup. Removal is irreversible.
+The cleanup tool never removes a protected ID; by default, it skips runs modified in the last hour. It only considers directories with the laboratory's run-name shape, a matching valid manifest, `artifacts_disposable: true`, a final status, and no detected reparse points in the tree. Unknown, incomplete, and access-denied directories are retained, even when using `-Apply`; the script never attempts to bypass ACLs. Without `-Apply` it performs **no deletion**. It deliberately does not remove `salida/` itself or the consolidated JSON file. Shell-based deletion of intentionally persistent laboratory results is **not** the handle-identity-verified cleanup of `portable-tempdirs`; only run it on a trusted local tree with no concurrent writers. Keep evidence that may be needed for batch incorporation, comparison or investigation before applying cleanup. Removal is irreversible. For the V1 closure and customer-distribution preparation, preserve the 231 protected runs and do not execute cleanup with `-Apply`.
 
 The shared pytest fixture uses `portable-tempdirs` both for a unique session parent created directly under the project root and for each per-test workspace. Both are managed with context managers and are removed when their owners exit, including on test failures. No persistent `.portable-test-workspaces/` parent is created by new sessions. An old `.portable-test-workspaces/` directory may still contain historical unowned artifacts; inspect it before removal. If it is empty and no tests are running, it can be removed nonrecursively. Old Codex CLI profile paths and historical test artifacts are **outside the scope** of the evaluation cleanup script; never delete them using unchecked recursive fallback code.
 

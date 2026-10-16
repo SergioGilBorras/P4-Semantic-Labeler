@@ -1,6 +1,6 @@
 # Security Policy
 
-Report vulnerabilities privately through the repository's security reporting channel. Do not disclose confidential source code or credentials in public issues.
+Report vulnerabilities privately to the repository maintainers, preferably through GitHub private vulnerability reporting when enabled. Do not disclose confidential source code, credentials or exploitable details in public issues. Before onboarding external customers, repository maintainers should confirm that an accessible private reporting channel is configured and communicated to those customers.
 
 The service limits input sizes and file formats, parses code without executing it, and treats all supplied text as untrusted prompt data. Submitted code or documents are not logged in full by default. MCP file reads require explicitly allowed roots. Prompt injection remains a risk even when untrusted reference data is separated logically from instructions.
 
