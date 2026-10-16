@@ -13,3 +13,7 @@ evaluacion/salida/
 evaluacion/tmp/
 evaluacion/configuracion/*.local.yaml
 .portable-test-workspaces/
+.package-venv/
+.idea/
+.mypy_cache/
+.tox/
