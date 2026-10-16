@@ -140,7 +140,7 @@ p4-labeler-mcp
 # Or: p4-labeler mcp
 ```
 
-MCP tools: `generate_label`, `generate_summary`, `generate_labels_batch`, `summarize_file`. The latter rejects paths outside explicitly allowed roots, including symlinks pointing outside the roots. MCP stdout is reserved for protocol messages. Remote MCP/HTTP transport is out of scope for V0.1.
+MCP tools: `generate_label`, `generate_summary`, `generate_labels_batch`, `summarize_file`. The latter rejects paths outside explicitly allowed roots, including symlinks pointing outside the roots. MCP stdout is reserved for protocol messages. Only local stdio MCP is included; HTTP via FastAPI is a separate supported interface. No remotely hosted MCP transport is supplied.
 
 ## Configuration
 
