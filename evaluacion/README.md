@@ -79,8 +79,7 @@ failure rate; other cases still need representative evaluation.
 
 New run manifests include `prompt_system_sha256` and
 `prompt_reduction_sha256`, SHA-256 fingerprints of the runtime
-`label_system.txt` and `label_reduction.txt` templates. Older manifests may
-lack these keys; do not edit them retroactively. Keep the pre-change commit SHA separately, and
+`label_system.txt` and `label_reduction.txt` templates. Manifests without these keys are preserved unchanged. Keep the pre-change commit SHA separately, and
 compare new runs by fingerprint. `input_sha256` records the selected case input.
 
 The laboratory defaults to `reduction_attempts=0`: `-Repetitions 2 -MaxCalls 2`
@@ -163,7 +162,7 @@ Codex will avoid filler; the rubric must address that manually.
 Edit **`evaluacion/evaluation-retention.json`** and add or remove exact `run_id` values in `keep_run_ids`. They must match the directory names under `evaluacion/salida/`. The versioned retention list protects **231 unique run IDs**. This JSON is a user-maintained policy; review changes before committing because other machines may contain different local run IDs. Do not assume that a directory absent from Git is safe to delete.
 
 ```powershell
-# Preview only (default): shows eligible old runs but deletes nothing.
+# Preview only (default): shows eligible unprotected runs but deletes nothing.
 .\evaluacion\cleanup-evaluations.ps1
 
 # Destructive operation, documented for maintenance only; do NOT run on the retained V1 evidence.
