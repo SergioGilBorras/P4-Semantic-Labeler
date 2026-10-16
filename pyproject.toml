@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "p4-semantic-labeler"
 version = "0.1.0"
-description = "Domain-independent contextual semantic labels with strict character limits"
+description = "AI-powered semantic labeling service that generates concise, context-aware titles and summaries from code, text, and documents. Supports configurable length, writing styles, multiple languages, and API, CLI, and MCP interfaces. Initially powered by P4-Bridge-Codex."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "P4-Semantic-Labeler contributors" }]
+authors = [{ name = "Sergio Gil-Borrás" }]
 dependencies = [
     "fastapi>=0.110,<1",
     "pydantic>=2,<3",
