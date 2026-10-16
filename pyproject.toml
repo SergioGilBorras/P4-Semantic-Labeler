@@ -1,30 +1,37 @@
 [build-system]
-requires = ["setuptools>=75", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "p4-semantic-labeler"
-version = "0.1.0"
-description = "AI-powered semantic labeling service that generates concise, context-aware titles and summaries from code, text, and documents. Supports configurable length, writing styles, multiple languages, and API, CLI, and MCP interfaces. Initially powered by P4-Bridge-Codex."
+version = "0.1.1"
+description = "AI-powered semantic labeling service that generates concise, context-aware titles and summaries from code, text, and documents. Supports configurable length, writing styles, multiple languages, and API, CLI, and MCP interfaces. Integrates with P4-Codex-Bridge."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Sergio Gil-Borrás" }]
+
+[project.urls]
+Repository = "https://github.com/SergioGilBorras/P4-Semantic-Labeler"
+Documentation = "https://github.com/SergioGilBorras/P4-Semantic-Labeler/blob/main/README.md"
+Issues = "https://github.com/SergioGilBorras/P4-Semantic-Labeler/issues"
+
 dependencies = [
-    "fastapi>=0.110,<1",
-    "pydantic>=2,<3",
-    "uvicorn>=0.27,<1",
-    "python-multipart>=0.0.9",
-    # Pin the validated standalone library from its reviewed 0.1.2 main commit until a PyPI release is adopted.
-    "portable-tempdirs @ git+https://github.com/SergioGilBorras/portable-tempdirs.git@fd6dbd640630e6911a53b4d756089099ec870a8b",
+    "fastapi>=0.143.2,<1",
+    "pydantic>=2.14.1,<3",
+    "uvicorn>=0.54,<1",
+    "python-multipart>=0.0.32,<1",
+    # Immutable Git ref shared with the P4-Codex-Bridge dependency.
+    "portable-tempdirs @ git+https://github.com/SergioGilBorras/portable-tempdirs.git@aad3878ccd8347a1a23faf609b2db21265d30a1d",
 ]
 
 [project.optional-dependencies]
-# Opt-in Codex bridge is tied to a current 1.2.0 main commit. It depends on the
-# same immutable portable-tempdirs 0.1.2 commit as the core application.
-codex = ["p4-codex-bridge @ git+https://github.com/SergioGilBorras/P4-Codex-Bridge.git@082705a0fb797d80d1010c6ead9b5dd2b3e69da4"]
-mcp = ["mcp>=1.0,<2"]
-dev = ["pytest>=8", "pytest-asyncio>=0.23", "httpx2>=2.4,<3", "ruff>=0.8", "mcp>=1.0,<2", "PyYAML>=6,<7"]
+# Optional Codex integration pinned to its reviewed source commit (version 1.4.1).
+# Bridge and core install the same portable-tempdirs commit.
+codex = ["p4-codex-bridge @ git+https://github.com/SergioGilBorras/P4-Codex-Bridge.git@a7e21c83670df925c478696c078d1cdc46fa3a9b"]
+mcp = ["mcp>=2.3.0,<3"]
+dev = ["pytest>=9.1.1,<10", "pytest-asyncio>=1.4.0,<2", "httpx2>=2.13.1,<3", "ruff>=0.17.1,<1", "mcp>=2.3.0,<3", "PyYAML>=6,<7"]
 
 [project.scripts]
 p4-labeler = "p4_semantic_labeler.interfaces.cli:main"
