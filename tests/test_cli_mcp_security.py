@@ -131,7 +131,7 @@ async def test_mcp_handler_tools_and_roots(settings, portable_tmp_path):
 
 @pytest.mark.asyncio
 async def test_official_mcp_registration_if_installed(settings):
-    pytest.importorskip("mcp.server.fastmcp")
+    pytest.importorskip("mcp.server.mcpserver")
     from p4_semantic_labeler.interfaces.mcp_server import create_mcp_server
 
     app = create_mcp_server(settings)
