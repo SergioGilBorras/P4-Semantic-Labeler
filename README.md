@@ -4,6 +4,21 @@
 
 **Providers:** `codex` integrates with [P4-Codex-Bridge](https://github.com/SergioGilBorras/P4-Codex-Bridge) 1.x using its public Python API. The `mock` provider is a deterministic formatter for tests and demonstrations, not semantic AI. `disabled` is the default until a provider is selected. Authenticated real Codex inference requires an installed Codex CLI and is not called in CI.
 
+## Install as a Python dependency
+
+The validated source release is [v0.1.0](https://github.com/SergioGilBorras/P4-Semantic-Labeler/releases/tag/v0.1.0) (commit `0179888`). The GitHub repository is **private** and the package is **not advertised as published on PyPI**. Git and read access to this repository and its Git-hosted dependencies are required for direct installation.
+
+From the **consumer's Python environment**, with access configured for private GitHub repositories:
+
+```bash
+python -m pip install "p4-semantic-labeler @ git+https://github.com/SergioGilBorras/P4-Semantic-Labeler.git@v0.1.0"
+# For opt-in Codex integration:
+python -m pip install "p4-semantic-labeler[codex] @ git+https://github.com/SergioGilBorras/P4-Semantic-Labeler.git@v0.1.0"
+python -m pip check
+```
+
+Import `Labeler`, `LabelRequest`, `Subject` and `Context` from `p4_semantic_labeler`. By default the provider is `disabled`; `mock` is for tests, while `codex` additionally requires the Codex CLI installed and authenticated. Installing a wheel alone does **not** bundle the Git-hosted dependencies. See [Installation and distribution](docs/distribution.md) for wheel building, verification and client-delivery requirements.
+
 ## Quick start
 
 Python 3.11+. To install the service **together with** the reviewed Codex Bridge 1.2.0 and portable-tempdirs 0.1.2 using pip from this checkout:
@@ -192,7 +207,7 @@ CI runs pytest and Ruff on Windows and Ubuntu with Python 3.11, 3.12 and 3.13. C
 
 El corpus original de **60 casos** se ha ejecutado conforme a su finalidad: 58 casos de etiquetado con Codex real y dos rechazos de validación. La evaluación histórica se ha consolidado, con incidencias y limitaciones semánticas conocidas; esto **no implica un 100 % de aprobación semántica** ni acredita rendimiento de producción.
 
-Consultar el [informe de evaluación y cierre de alcance V1](docs/v1-evaluacion-y-cierre.md). La expresión «V1» designa el hito funcional; la versión del paquete en `pyproject.toml` continúa siendo `0.1.0`. La publicación y la comprobación de CI del commit final están pendientes.
+Consultar el [informe de evaluación y cierre de alcance V1](docs/v1-evaluacion-y-cierre.md). La expresión «V1» designa el hito funcional; la versión del paquete en `pyproject.toml` continúa siendo `0.1.0`. **Publicación completada:** [GitHub Release v0.1.0](https://github.com/SergioGilBorras/P4-Semantic-Labeler/releases/tag/v0.1.0) apunta al commit `0179888`; sus seis trabajos de CI (Windows y Ubuntu, Python 3.11–3.13) finalizaron correctamente. El cambio de metadatos `820ad5b` se incorporó a `main` **después** de crear ese tag, por lo que no forma parte del contenido inmutable de `v0.1.0`. La Release no contiene todavía un wheel adjunto. Para entregar un paquete que incorpore cambios posteriores al tag será necesario versionarlo, construirlo y validarlo como una nueva publicación. Consulta [Distribución](docs/distribution.md).
 
 No se prevén fases adicionales de desarrollo (V2/V3) dentro de este cierre.
 

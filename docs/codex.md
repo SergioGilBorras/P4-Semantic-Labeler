@@ -7,7 +7,7 @@ python -m pip install -e '.[codex]'
 python -m pip check
 ```
 
-This extra pins P4-Codex-Bridge **1.2.0** to immutable commit `082705a0fb797d80d1010c6ead9b5dd2b3e69da4`, and the main dependencies pin portable-tempdirs **0.1.2** to `fd6dbd640630e6911a53b4d756089099ec870a8b`. The Bridge pins that *same* portable-tempdirs commit, avoiding mismatched source requirements. Both pins track the reviewed current `main` commits; Bridge and the direct dependency use the same portable-tempdirs revision. These packages must be installed into the **same interpreter** used by Semantic-Labeler. CI checks their installed metadata and public APIs without invoking Codex CLI.
+This extra pins P4-Codex-Bridge **1.2.0** to immutable commit `082705a0fb797d80d1010c6ead9b5dd2b3e69da4`, and the main dependencies pin portable-tempdirs **0.1.2** to `fd6dbd640630e6911a53b4d756089099ec870a8b`. The Bridge pins that *same* portable-tempdirs commit, avoiding mismatched source requirements. These are reviewed, immutable commit pins rather than floating branch references; Bridge and the direct dependency use the same portable-tempdirs revision. These packages must be installed into the **same interpreter** used by Semantic-Labeler. CI checks their installed metadata and public APIs without invoking Codex CLI.
 
 The bridge remains an optional runtime integration: it is imported only for Codex requests, and the Python library and mock provider do not require it. The adapter requires Bridge 1.2.0 or later because it explicitly supplies `ephemeral=True`.
 

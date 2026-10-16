@@ -1,7 +1,7 @@
 # P4-Semantic-Labeler — Evaluación y cierre de alcance V1
 
 **Corte de evidencia:** 2026-10-12. **Paquete declarado:** `0.1.0` en `pyproject.toml`.
-**Estado:** cobertura de pruebas originales completa, con limitaciones semánticas conocidas y publicación todavía pendiente.
+**Estado:** alcance funcional V1 cerrado y publicación GitHub `v0.1.0` completada, con limitaciones semánticas documentadas. La fecha del corte de evidencia no cambia por las verificaciones posteriores.
 La expresión **V1** identifica el hito funcional acordado; no equivale automáticamente a una versión SemVer `1.0.0`.
 
 ## Alcance y cobertura
@@ -53,14 +53,16 @@ El laboratorio confirma estados y controles objetivos; **no asigna por sí solo 
 
 ## Verificaciones de desarrollo y limitaciones aceptadas
 
-Últimos controles locales comunicados: `pip check` sin dependencias rotas; **114 pruebas pytest aprobadas y 1 omitida**; `ruff check .` sin infracciones; laboratorio validado con `initial_cases=60`, `accumulated_cases=60`. Son resultados anteriores al futuro commit de cierre; se debe validar también la CI del commit definitivo.
+Últimos controles locales comunicados: `pip check` sin dependencias rotas; **114 pruebas pytest aprobadas y 1 omitida**; `ruff check .` sin infracciones; laboratorio validado con `initial_cases=60`, `accumulated_cases=60`. Son resultados locales documentados al cierre. Posteriormente se verificó que la CI del commit de publicación `0179888` superó los seis trabajos (Windows/Ubuntu, Python 3.11, 3.12 y 3.13); la ejecución de CI del commit de metadatos `820ad5b` también terminó correctamente. Estas verificaciones técnicas no equivalen a una auditoría semántica independiente.
 
 Limitaciones explícitas de V1: estimación heurística y no exacta de tokens; truncamiento con posible pérdida de significado; ausencia de verificación automática completa de fidelidad, estilo e idioma; dependencia de autenticación/entorno del Codex CLI; falta de aislamiento de roles del puente y posible herencia de herramientas MCP externas; rate limit en memoria por proceso; evaluación sintética, sin acreditación de generalización a otra aplicación. El proveedor `mock` solo da formato y no razona semánticamente. No se propone un V2 o V3 para este cierre.
 
 ## Retención, reproducibilidad y publicación
 
-El usuario confirmó localmente que `evaluacion/evaluation-retention.json` protege **231 identificadores únicos**. Ese cambio local debe incorporarse al mismo commit de cierre que este documento. Las carpetas de `evaluacion/salida/` no se publican en Git; se mantiene el JSON consolidado fuera del repositorio como evidencia. **No ejecutar limpieza con `-Apply`** sobre el histórico.
+El archivo versionado `evaluacion/evaluation-retention.json` protege **231 identificadores únicos**; se incorporó al commit de cierre `0179888` junto a este informe y al README. Las carpetas de `evaluacion/salida/` no se publican en Git; se mantiene el JSON consolidado fuera del repositorio como evidencia. **No ejecutar limpieza con `-Apply`** sobre el histórico.
 
-Antes de publicar: incorporar las modificaciones documentales, añadir el registro de retención local, comprobar `git diff --check`, `pip check`, pytest y Ruff, y verificar la CI del commit. El tag/release, si se crea, ha de corresponder con la versión realmente declarada `0.1.0` (no `v1.0.0` sin cambio explícito de versión). La decisión de publicar y el cierre de `main` siguen pendientes de confirmación.
+La [Release `v0.1.0`](https://github.com/SergioGilBorras/P4-Semantic-Labeler/releases/tag/v0.1.0) está publicada como versión estable (no borrador ni prerelease), anclada al commit `0179888727f96796e7c0a44a5b6631f15a1b3a51`. La etiqueta y el historial de PR constituyen evidencia reproducible de esa publicación. El commit `820ad5b` modificó después en `main` la descripción y el autor de `pyproject.toml`; **ese cambio posterior no pertenece al tag `v0.1.0`**.
 
-**Decisión de alcance:** cerrar el desarrollo funcional en V1; documentar sin ocultar resultados desfavorables ni aumentar el número de inferencias de Codex.
+La Release todavía no tiene archivos wheel adjuntos. La disponibilidad para clientes y la instalación de dependencias alojadas en GitHub deben comprobarse en un entorno limpio antes de distribuir. Cualquier nueva entrega que incluya modificaciones posteriores al tag requiere su propia versión y CI; no se debe reconstruir un artefacto alterado y presentarlo como si fuera el contenido de la etiqueta histórica. Véase la [guía de distribución](../docs/distribution.md).
+
+**Decisión de alcance:** el desarrollo funcional V1 quedó cerrado y publicado. Se conserva la evidencia desfavorable sin atribuir aprobación semántica universal ni ejecutar más inferencias de Codex.
