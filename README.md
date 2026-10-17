@@ -4,6 +4,8 @@
 
 **Author and maintainer:** [Sergio Gil-Borrás](AUTHORS.md). **License:** [MIT](LICENSE). **Python:** 3.11+.
 
+**Source package version:** `0.1.1`. Check [GitHub Releases](https://github.com/SergioGilBorras/P4-Semantic-Labeler/releases) for published, immutable tags and downloadable assets; the version in source control does not itself imply a published Release.
+
 ## Capabilities
 
 - Generates labels of type `title` or `summary` with configurable language, style and a hard `max_chars` limit.
