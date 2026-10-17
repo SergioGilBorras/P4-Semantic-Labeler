@@ -4,9 +4,9 @@ P4-Semantic-Labeler is a provider-neutral labeling library exposing Python, CLI,
 
 ## Packaging and distribution
 
-- Build and verify signed-off Python wheels against an immutable release commit.
+- Extend wheel **and source archive** installation verification to the full supported OS/Python matrix (CI currently checks both archives on Ubuntu Python 3.11).
 - Establish a documented customer distribution channel for the publicly hosted source and its Git-hosted dependencies; document offline installation where required.
-- Publish a versioned GitHub Release with tested artifacts, SHA-256 checksums and resolved dependency manifests.
+- Publish a versioned GitHub Release containing tested `.whl` and `.tar.gz` artifacts, SHA-256 checksums and resolved dependency manifests.
 - Run clean-environment installation tests for supported Python versions and both operating systems.
 
 ## Quality and automation
