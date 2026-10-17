@@ -58,8 +58,8 @@ def test_local_markdown_links_are_valid_and_fences_closed():
                 continue
             if in_code:
                 continue
-            for match in re.finditer(r"!?(?:\)?\[([^]\\n]+)\]\(([^)]+)\)", line):
-                link = match.group(2).split("#", 1)[0].split("?", 1)[0]
+            for match in re.finditer(r"!?\[[^\]]+\]\(([^)]+)\)", line):
+                link = match.group(1).split("#", 1)[0].split("?", 1)[0]
                 if not link or re.match(r"^(?:https?://|mailto:)", link):
                     continue
                 if not (doc.parent / link).exists():
