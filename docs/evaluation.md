@@ -19,7 +19,7 @@ An acceptable semantic assessment requires a weighted score of at least **3.2**,
 
 ## Evidence and current limitations
 
-The recorded V1 evaluation evidence comprises **231 runs** and **258 results** (250 Codex, 8 mock). Of 246 Codex outputs with labels, **17** have recorded semantic-review warnings; **4** of 250 Codex runs have technical errors. All 254 outputs bearing labels passed the recorded objective checks. These are counts from an evaluation snapshot, **not production reliability estimates**, and no overall independent semantic pass rate has been established.
+The recorded V1 evaluation evidence comprises **231 runs** and **258 results** (250 Codex, 8 mock). Of 246 Codex outputs with labels, **17** have recorded warnings requiring semantic review; **4** of the 250 Codex **results** have technical errors. All 254 outputs bearing labels passed the recorded objective checks. These are counts from a recorded evaluation dataset, **not production reliability estimates**, and no overall independent semantic pass rate has been established.
 
 The protected set of **231 unique run IDs** is recorded in `evaluacion/evaluation-retention.json`. The consolidated summary is kept outside Git under `evaluacion/salida/`; it is not part of a distributable wheel. Historical evidence is preserved for traceability. Do not apply destructive cleanup to protected runs.
 

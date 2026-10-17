@@ -4,6 +4,8 @@
 
 **Author and maintainer:** [Sergio Gil-Borrás](AUTHORS.md). **License:** [MIT](LICENSE). **Python:** 3.11+.
 
+**Source package version:** `0.1.1`. Check [GitHub Releases](https://github.com/SergioGilBorras/P4-Semantic-Labeler/releases) for published, immutable tags and downloadable assets; the version in source control does not itself imply a published Release.
+
 ## Capabilities
 
 - Generates labels of type `title` or `summary` with configurable language, style and a hard `max_chars` limit.
@@ -24,7 +26,7 @@ P4 supplies context selection, length validation and interfaces; the model provi
 
 ## Installation
 
-This repository is private; install from a checkout that has access to Git-hosted dependencies. Required [portable-tempdirs](https://github.com/SergioGilBorras/portable-tempdirs) is pinned to a fixed Git commit. The optional Codex extra pins P4-Codex-Bridge to a fixed Git commit. The two packages use the **same portable-tempdirs commit**.
+This repository is public; the package can be installed from its GitHub source. Git and network access are required to resolve its Git-hosted dependencies. Required [portable-tempdirs](https://github.com/SergioGilBorras/portable-tempdirs) is pinned to a fixed Git commit. The optional Codex extra pins P4-Codex-Bridge to a fixed Git commit. The two packages use the **same portable-tempdirs commit**.
 
 ```bash
 python -m pip install -e .

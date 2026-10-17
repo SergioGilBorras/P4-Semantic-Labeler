@@ -1,6 +1,6 @@
 # Installation, packaging and customer distribution
 
-P4-Semantic-Labeler is a Python **library**, with optional CLI, HTTP and MCP entry points. The source repository is private; some dependencies are supplied directly from GitHub. A wheel does not embed dependency wheels or a Codex CLI installation.
+P4-Semantic-Labeler is a Python **library**, with optional CLI, HTTP and MCP entry points. The source repository and its two P4 Git-hosted dependencies are currently public. Python dependencies are distributed through PyPI or pinned GitHub source commits. A wheel does not embed dependency wheels or a Codex CLI installation.
 
 ## Supported environments and dependencies
 
@@ -12,20 +12,23 @@ P4-Semantic-Labeler is a Python **library**, with optional CLI, HTTP and MCP ent
 
 ## Installation from GitHub
 
-For development or authorized internal use, clone the repository and install into the consumer application's virtual environment:
+For development, clone the repository and install into the consumer application's virtual environment:
 
 ```bash
 python -m pip install -e '.[codex]'
 python -m pip check
 ```
 
-To consume a **published immutable release**, use an actual release tag or commit SHA that exists in GitHub. Do not use a moving `@main` in customer dependency declarations.
+For the **CI-verified 0.1.1 source version**, the following commands install from its immutable commit (rather than a moving `main` branch):
 
 ```bash
-python -m pip install "p4-semantic-labeler[codex] @ git+https://github.com/SergioGilBorras/P4-Semantic-Labeler.git@<PUBLISHED_TAG_OR_COMMIT>"
+python -m pip install "p4-semantic-labeler @ git+https://github.com/SergioGilBorras/P4-Semantic-Labeler.git@f0dbaad366554241cc0bcf8e2c5f5f9d90223f3f"
+python -m pip install "p4-semantic-labeler[codex] @ git+https://github.com/SergioGilBorras/P4-Semantic-Labeler.git@f0dbaad366554241cc0bcf8e2c5f5f9d90223f3f"
 ```
 
-Replace `<PUBLISHED_TAG_OR_COMMIT>` with a real, verified tag/SHA. This placeholder is intentionally **not** a published release. Private repositories require authorized credentials; never store access tokens in `pyproject.toml`, URLs, CI logs or command history. A wheel alone does not remove the need to resolve its declared source dependencies.
+The first command installs the base package; the second requests the optional Codex integration. The referenced source commit has passed the six CI jobs, including a wheel build and isolated-install smoke test; **0.1.1 is not yet a published GitHub Release**. The existing tagged Release is `v0.1.0`, representing a different source revision. Once `v0.1.1` is published and verified, consumers can use its release tag.
+
+Git is needed to resolve the direct source requirements. The repositories are currently public, but offline or restricted client networks still require an approved dependency distribution strategy. Never embed tokens in URLs or committed files. A wheel alone does not remove the need to resolve its declared dependencies.
 
 ## Build and verify a wheel
 
@@ -50,6 +53,6 @@ The commands do not invoke Codex. For `[codex]` installations, also verify that 
 
 ## Customer release gate
 
-Publish a release artifact only when its own tag/commit has successful CI, its wheel builds and installs in isolation, its dependency sources are reachable to the intended recipients, and its installation commands are reproducible. Record a SHA-256 checksum and a manifest of exact dependencies. Provide the supported Python versions, sample usage, current security limitations, and a private vulnerability-reporting channel.
+Publish a release artifact only when its own tag/commit has successful CI, its wheel builds and installs in isolation, its dependency sources are reachable to the intended recipients, and its installation commands are reproducible. CI uploads a temporary workflow artifact; this is **not** a GitHub Release asset. Record a SHA-256 checksum and a manifest of exact dependencies. Provide the supported Python versions, sample usage, current security limitations, and a private vulnerability-reporting channel.
 
 A version declared in `pyproject.toml` is **not automatically a GitHub Release**. Publish the corresponding immutable tag and attach the tested wheel through a controlled release process. See the [Roadmap](../ROADMAP.md) for operational distribution work.
