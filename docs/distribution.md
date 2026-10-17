@@ -1,58 +1,83 @@
-# Installation, packaging and customer distribution
+# Building, checking and distributing P4-Semantic-Labeler
 
-P4-Semantic-Labeler is a Python **library**, with optional CLI, HTTP and MCP entry points. The source repository and its two P4 Git-hosted dependencies are currently public. Python dependencies are distributed through PyPI or pinned GitHub source commits. A wheel does not embed dependency wheels or a Codex CLI installation.
+P4-Semantic-Labeler is distributed as a **Python package**. The distribution folder `dist/` is generated locally or in CI and contains **two complementary artifacts**:
 
-## Supported environments and dependencies
+| File | Format | Purpose |
+|---|---|---|
+| `p4_semantic_labeler-0.1.1-py3-none-any.whl` | Wheel | Ready-to-install Python package, including runtime prompt assets |
+| `p4_semantic_labeler-0.1.1.tar.gz` | Source distribution (sdist) | Buildable Python source, package metadata, documentation and examples |
 
-- Python **3.11+**, Windows and Ubuntu verified through CI.
-- Runtime: FastAPI, Pydantic v2, Uvicorn, python-multipart and [portable-tempdirs](https://github.com/SergioGilBorras/portable-tempdirs) **0.1.2** pinned to commit `aad3878ccd8347a1a23faf609b2db21265d30a1d`.
-- Optional `[codex]`: [P4-Codex-Bridge](https://github.com/SergioGilBorras/P4-Codex-Bridge) **1.4.1** pinned to commit `a7e21c83670df925c478696c078d1cdc46fa3a9b`, plus an installed/authenticated Codex CLI.
-- Optional `[mcp]`: official MCP Python SDK **2.x**, local stdio server only.
-- Regular PyPI dependencies use compatible version ranges; exact Git dependencies use immutable SHA pins. Validate final resolved versions with `python -m pip check` and `python -m pip freeze`.
+A wheel and sdist are **not** stand-alone executables and do not bundle the Codex CLI or all third-party dependencies. The project and its pinned P4 dependencies are currently hosted in public GitHub repositories. Network access and Git are needed when `pip` resolves the declared Git-source dependencies, unless the customer uses an approved offline dependency mirror.
 
-## Installation from GitHub
+## Dependencies and supported environments
 
-For development, clone the repository and install into the consumer application's virtual environment:
+- Python **3.11+**; CI runs on Windows and Ubuntu with Python 3.11, 3.12 and 3.13.
+- Required: FastAPI, Pydantic v2, Uvicorn, python-multipart and [portable-tempdirs](https://github.com/SergioGilBorras/portable-tempdirs) **0.1.2**, pinned to commit `aad3878ccd8347a1a23faf609b2db21265d30a1d`.
+- Optional `[codex]`: [P4-Codex-Bridge](https://github.com/SergioGilBorras/P4-Codex-Bridge) **1.4.1**, pinned to commit `a7e21c83670df925c478696c078d1cdc46fa3a9b`. Requires an authenticated official Codex CLI for actual inference. The Bridge pins the same `portable-tempdirs` Git commit.
+- Optional `[mcp]`: MCP Python SDK 2.x for a **local stdio** server. The SDK is not needed for the base Python API.
 
-```bash
-python -m pip install -e '.[codex]'
-python -m pip check
-```
+Always resolve dependencies using the **same Python interpreter** that runs P4, and verify with `python -m pip check`. A source version declared in `pyproject.toml` does not itself mean a GitHub Release or PyPI publication exists.
 
-For the **CI-verified 0.1.1 source version**, the following commands install from its immutable commit (rather than a moving `main` branch):
+## Build wheel and source distribution
 
-```bash
-python -m pip install "p4-semantic-labeler @ git+https://github.com/SergioGilBorras/P4-Semantic-Labeler.git@f0dbaad366554241cc0bcf8e2c5f5f9d90223f3f"
-python -m pip install "p4-semantic-labeler[codex] @ git+https://github.com/SergioGilBorras/P4-Semantic-Labeler.git@f0dbaad366554241cc0bcf8e2c5f5f9d90223f3f"
-```
-
-The first command installs the base package; the second requests the optional Codex integration. The referenced source commit has passed the six CI jobs, including a wheel build and isolated-install smoke test; **0.1.1 is not yet a published GitHub Release**. The existing tagged Release is `v0.1.0`, representing a different source revision. Once `v0.1.1` is published and verified, consumers can use its release tag.
-
-Git is needed to resolve the direct source requirements. The repositories are currently public, but offline or restricted client networks still require an approved dependency distribution strategy. Never embed tokens in URLs or committed files. A wheel alone does not remove the need to resolve its declared dependencies.
-
-## Build and verify a wheel
-
-From a **clean checkout of the exact candidate commit**:
+Use a clean, synchronized checkout of the intended commit. No Codex inference is used.
 
 ```bash
 python -m pip install build
-python -m build --wheel --outdir dist
+python -m build --outdir dist
 ```
 
-When packaging version `0.1.1`, the expected name is `p4_semantic_labeler-0.1.1-py3-none-any.whl`. Inspect the resulting wheel to confirm its package metadata, prompt templates, `LICENSE` and console entry points. The `dist/` and `build/` directories are generated artifacts and are intentionally excluded by `.gitignore`.
+On Windows PowerShell 5.1, use the project-provided, guarded build/verification script from a clean checkout:
 
-Install in a **fresh virtual environment**, not the build environment:
+```powershell
+.\scripts\build-distribution.ps1
+```
+
+The script builds and inspects both archives, tests installation from each in its own newly created virtual environment, prints hashes and cleans **only** verification environments it created. It will not overwrite a populated `dist/` directory. For manual building from the project root and with an existing `.venv`, use:
+
+```powershell
+& .\.venv\Scripts\python.exe -m pip install build
+& .\.venv\Scripts\python.exe -m build --outdir dist
+Get-ChildItem -LiteralPath .\dist -File
+Get-ChildItem -LiteralPath .\dist -File | Get-FileHash -Algorithm SHA256
+```
+
+The build backend uses the source distribution to prepare the wheel. `MANIFEST.in` includes maintained documentation, the roadmap, author/security/contribution files, examples and prompt assets in the **source archive**; package-data configuration embeds runtime prompt templates in the **wheel**. Generated `build/` and `dist/` directories remain in `.gitignore` and must not be committed.
+
+The output names shown above apply to the currently declared version `0.1.1`. If the version changes, use the filenames generated by the build rather than renaming old archives.
+
+## Verify the artifacts
+
+Check that **both** files exist, inspect the wheel and source tarball, and install in clean Python virtual environments. These commands do **not** contact a real model:
+
+```powershell
+& .\.venv\Scripts\python.exe -c "import pathlib,tarfile,zipfile; p=pathlib.Path('dist'); w=list(p.glob('*.whl')); s=list(p.glob('*.tar.gz')); assert len(w)==len(s)==1,(w,s); assert any(n.endswith('prompts/label_system.txt') for n in zipfile.ZipFile(w[0]).namelist()); assert any(n.endswith('docs/distribution.md') for n in tarfile.open(s[0]).getnames()); print('Archives OK')"
+& .\.venv\Scripts\python.exe -m venv .package-venv
+& .\.package-venv\Scripts\python.exe -m pip install .\dist\p4_semantic_labeler-0.1.1-py3-none-any.whl
+& .\.package-venv\Scripts\python.exe -m pip check
+& .\.package-venv\Scripts\python.exe -c "from importlib.metadata import version; from p4_semantic_labeler import Labeler,LabelRequest,Subject; from p4_semantic_labeler.config import Settings; assert version('p4-semantic-labeler')=='0.1.1'; r=Labeler(settings=Settings(provider='mock')).generate(LabelRequest(subject=Subject(name='process_pending_orders'))); assert r.label=='process pending orders'; print('Wheel OK')"
+& .\.venv\Scripts\python.exe -m venv .package-sdist-venv
+& .\.package-sdist-venv\Scripts\python.exe -m pip install .\dist\p4_semantic_labeler-0.1.1.tar.gz
+& .\.package-sdist-venv\Scripts\python.exe -m pip check
+& .\.package-sdist-venv\Scripts\python.exe -c "from importlib.metadata import version; from p4_semantic_labeler import Labeler,LabelRequest,Subject; from p4_semantic_labeler.config import Settings; assert version('p4-semantic-labeler')=='0.1.1'; r=Labeler(settings=Settings(provider='mock')).generate(LabelRequest(subject=Subject(name='process_pending_orders'))); assert r.label=='process pending orders'; print('Source archive OK')"
+```
+
+Do not overwrite valuable existing `.package-venv/` or `.package-sdist-venv/` directories without checking first. The CI job performs the equivalent isolated archive checks automatically and uploads an **Actions artifact containing both files**. An Actions artifact is not a permanent release asset.
+
+## Install the project from GitHub
+
+The repository is public. For a **reproducible consumer install**, reference a reviewed immutable tag or exact commit SHA, not a moving `@main`:
 
 ```bash
-python -m pip install "dist/p4_semantic_labeler-0.1.1-py3-none-any.whl"
-python -m pip check
-python -c "from p4_semantic_labeler import Labeler, LabelRequest, Subject; from p4_semantic_labeler.config import Settings; r=Labeler(settings=Settings(provider='mock')).generate(LabelRequest(subject=Subject(name='process_pending_orders'),max_chars=45)); assert r.provider=='mock' and r.label == 'process pending orders'; print('Packaging OK')"
+python -m pip install "p4-semantic-labeler @ git+https://github.com/SergioGilBorras/P4-Semantic-Labeler.git@<REVIEWED_COMMIT_SHA>"
 ```
 
-The commands do not invoke Codex. For `[codex]` installations, also verify that the **same interpreter** imports Bridge 1.4.1 and portable-tempdirs 0.1.2 and that the Codex CLI is installed and authenticated. A real semantic-quality assessment must be conducted separately.
+The placeholder must be replaced with a real commit verified in GitHub. To add Codex, specify `p4-semantic-labeler[codex]` instead. Never embed access tokens in package URLs or committed files. To install a built wheel, use `python -m pip install path/to/p4_semantic_labeler-0.1.1-py3-none-any.whl`; `pip` still resolves dependencies.
 
-## Customer release gate
+## Release gate and safe cleanup
 
-Publish a release artifact only when its own tag/commit has successful CI, its wheel builds and installs in isolation, its dependency sources are reachable to the intended recipients, and its installation commands are reproducible. CI uploads a temporary workflow artifact; this is **not** a GitHub Release asset. Record a SHA-256 checksum and a manifest of exact dependencies. Provide the supported Python versions, sample usage, current security limitations, and a private vulnerability-reporting channel.
+Before distributing to customers, verify the exact source commit, CI result, both archive names and SHA-256 checksums, a clean-environment `pip check`, runtime prompt assets, supported Python versions and the intended recipients' ability to retrieve the GitHub dependencies. Publish the tested artifacts under an immutable GitHub Release tag (or an authorized index) only after those checks; attach both archives and their checksums. Do not modify an existing released tag to point at different source.
 
-A version declared in `pyproject.toml` is **not automatically a GitHub Release**. Publish the corresponding immutable tag and attach the tested wheel through a controlled release process. See the [Roadmap](../ROADMAP.md) for operational distribution work.
+Once checks pass, you may remove generated `build/` and the **temporary packaging-test** virtual environments. Preserve `dist/` until delivery is complete; do not delete the project's normal `.venv/`, protected evaluation output, local configuration or user files. Inspect `git clean -ndX` for a **preview only**; never use blanket ignored-file deletion on this repository.
+
+For the currently published releases and attached assets, consult [GitHub Releases](https://github.com/SergioGilBorras/P4-Semantic-Labeler/releases). See [Security](../SECURITY.md) for operational precautions and [ROADMAP](../ROADMAP.md) for planned distribution improvements.

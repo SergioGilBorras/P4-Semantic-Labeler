@@ -27,21 +27,32 @@ jobs:
       - run: python -m pip check
       - run: ruff check .
       - run: pytest -q
-      - name: Build wheel and smoke-test clean installation (Ubuntu Python 3.11)
+      - name: Build wheel and sdist, inspect archives and test clean installs (Ubuntu Python 3.11)
         if: runner.os == 'Linux' && matrix.python-version == '3.11'
         run: |
           python -m pip install build
-          python -m build --wheel --outdir dist
+          python -m build --outdir dist
+          python -c "from pathlib import Path; import tarfile, zipfile; d=Path('dist'); w=list(d.glob('p4_semantic_labeler-0.1.1-*.whl')); s=list(d.glob('p4_semantic_labeler-0.1.1.tar.gz')); assert len(w)==len(s)==1, (w,s); z=zipfile.ZipFile(w[0]); t=tarfile.open(s[0]); assert any(x.endswith('prompts/label_system.txt') for x in z.namelist()); assert any(x.endswith('docs/distribution.md') for x in t.getnames()); assert any(x.endswith('examples/README.md') for x in t.getnames()); assert any(x.endswith('LICENSE') for x in t.getnames()); print('Both distribution archives inspected')"
           python -m venv .package-venv
           .package-venv/bin/python -m pip install "dist/p4_semantic_labeler-0.1.1-py3-none-any.whl"
           .package-venv/bin/python -m pip check
           .package-venv/bin/python -c "from importlib import metadata, resources; from p4_semantic_labeler import Labeler, LabelRequest, Subject; from p4_semantic_labeler.config import Settings; import p4_semantic_labeler; assert metadata.version('p4-semantic-labeler') == p4_semantic_labeler.__version__ == '0.1.1'; assert resources.files('p4_semantic_labeler.prompts').joinpath('label_system.txt').is_file(); assert metadata.version('portable-tempdirs') == '0.1.2'; r=Labeler(settings=Settings(provider='mock')).generate(LabelRequest(subject=Subject(name='process_pending_orders'),max_chars=45)); assert r.label == 'process pending orders'; print('Wheel smoke test OK')"
+          python -m venv .package-sdist-venv
+          .package-sdist-venv/bin/python -m pip install "dist/p4_semantic_labeler-0.1.1.tar.gz"
+          .package-sdist-venv/bin/python -m pip check
+          .package-sdist-venv/bin/python -c "from importlib import metadata, resources; from p4_semantic_labeler import Labeler, LabelRequest, Subject; from p4_semantic_labeler.config import Settings; assert metadata.version('p4-semantic-labeler') == '0.1.1'; assert resources.files('p4_semantic_labeler.prompts').joinpath('label_system.txt').is_file(); r=Labeler(settings=Settings(provider='mock')).generate(LabelRequest(subject=Subject(name='process_pending_orders'),max_chars=45)); assert r.label == 'process pending orders'; print('Source archive smoke test OK')"
       - uses: actions/upload-artifact@v7
         if: runner.os == 'Linux' && matrix.python-version == '3.11'
         with:
-          name: p4-semantic-labeler-wheel-py311
-          path: dist/*.whl
+          name: p4-semantic-labeler-dist-py311
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
           if-no-files-found: error
+      - name: Build and verify both distribution archives on Windows (PowerShell 5.1)
+        if: runner.os == 'Windows' && matrix.python-version == '3.11'
+        shell: powershell
+        run: .\scripts\build-distribution.ps1
       - name: Verify no managed pytest session directories remain
         if: runner.os == 'Windows'
         shell: powershell
@@ -58,7 +69,7 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          foreach ($file in @('evaluacion/cleanup-evaluations.ps1', 'evaluacion/run-evaluation-batch.ps1', 'evaluacion/summarize-evaluations.ps1')) {
+          foreach ($file in @('evaluacion/cleanup-evaluations.ps1', 'evaluacion/run-evaluation-batch.ps1', 'evaluacion/summarize-evaluations.ps1', 'scripts/build-distribution.ps1')) {
             $tokens = $null
             $parseErrors = $null
             [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path -LiteralPath $file).Path, [ref]$tokens, [ref]$parseErrors)

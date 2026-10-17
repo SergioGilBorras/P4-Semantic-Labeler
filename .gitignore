@@ -17,3 +17,4 @@ evaluacion/configuracion/*.local.yaml
 .idea/
 .mypy_cache/
 .tox/
+.package-sdist-venv/
