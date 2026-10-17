@@ -1,6 +1,6 @@
 # Packaging scripts
 
-[`build-distribution.ps1`](build-distribution.ps1) is the Windows PowerShell 5.1 build and offline/mock packaging-verification entry point. From a **clean checkout of the repository root**:
+[`build-distribution.ps1`](build-distribution.ps1) is the Windows PowerShell 5.1 build and mock-only packaging-verification entry point. From a **clean checkout of the repository root**:
 
 ```powershell
 .\scripts\build-distribution.ps1
