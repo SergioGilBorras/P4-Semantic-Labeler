@@ -30,7 +30,7 @@ python -m build --outdir dist
 On Windows PowerShell 5.1, use the project-provided, guarded build/verification script from a clean checkout:
 
 ```powershell
-.\\scripts\\build-distribution.ps1
+.\scripts\build-distribution.ps1
 ```
 
 The script builds and inspects both archives, tests installation from each in its own newly created virtual environment, prints hashes and cleans **only** verification environments it created. It will not overwrite a populated `dist/` directory. For manual building from the project root and with an existing `.venv`, use:
