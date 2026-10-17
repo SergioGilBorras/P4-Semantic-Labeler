@@ -49,6 +49,10 @@ jobs:
             dist/*.whl
             dist/*.tar.gz
           if-no-files-found: error
+      - name: Build and verify both distribution archives on Windows (PowerShell 5.1)
+        if: runner.os == 'Windows' && matrix.python-version == '3.11'
+        shell: powershell
+        run: .\scripts\build-distribution.ps1
       - name: Verify no managed pytest session directories remain
         if: runner.os == 'Windows'
         shell: powershell
@@ -65,7 +69,7 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          foreach ($file in @('evaluacion/cleanup-evaluations.ps1', 'evaluacion/run-evaluation-batch.ps1', 'evaluacion/summarize-evaluations.ps1')) {
+          foreach ($file in @('evaluacion/cleanup-evaluations.ps1', 'evaluacion/run-evaluation-batch.ps1', 'evaluacion/summarize-evaluations.ps1', 'scripts/build-distribution.ps1')) {
             $tokens = $null
             $parseErrors = $null
             [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path -LiteralPath $file).Path, [ref]$tokens, [ref]$parseErrors)
