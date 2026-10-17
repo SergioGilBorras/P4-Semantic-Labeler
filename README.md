@@ -24,7 +24,7 @@ P4 supplies context selection, length validation and interfaces; the model provi
 
 ## Installation
 
-This repository is private; install from a checkout that has access to Git-hosted dependencies. Required [portable-tempdirs](https://github.com/SergioGilBorras/portable-tempdirs) is pinned to a fixed Git commit. The optional Codex extra pins P4-Codex-Bridge to a fixed Git commit. The two packages use the **same portable-tempdirs commit**.
+This repository is public; the package can be installed from its GitHub source. Git and network access are required to resolve its Git-hosted dependencies. Required [portable-tempdirs](https://github.com/SergioGilBorras/portable-tempdirs) is pinned to a fixed Git commit. The optional Codex extra pins P4-Codex-Bridge to a fixed Git commit. The two packages use the **same portable-tempdirs commit**.
 
 ```bash
 python -m pip install -e .
