@@ -32,7 +32,7 @@ Provider-neutral errors map to 413 (limits), 422 (request constraints), 502 (pro
 
 ## Operational security
 
-The API is stateless except for a local IP-based rolling-window limiter. It stores no input texts. A production deployment should use gateway auth, rate limit and TLS; the built-in Bearer check is suitable as an additional simple protection for one service. Authentication on `/v1` is optional for localhost demos, not an endorsement of publicly unauthenticated deployments. `/health` is liveness; never treat it as proof of downstream Codex availability.
+The API keeps no application-level conversation or document state, apart from a local IP-based rolling-window limiter. It does not intentionally persist input texts or prompts; multipart parsing may use framework-managed temporary storage. A production deployment should use gateway auth, rate limit and TLS; the built-in Bearer check is suitable as an additional simple protection for one service. Authentication on `/v1` is optional for localhost demos, not an endorsement of publicly unauthenticated deployments. `/health` is liveness; never treat it as proof of downstream Codex availability.
 
 MCP stdio accesses disk only if `P4_LABELER_MCP_ROOTS` contains allowed directories. The service resolves paths and symlinks before checking containment and rejects non-regular files and disallowed formats. For high-adversary or multi-user deployments isolate filesystem mounts at OS/container boundary as well; a path-check/read race cannot be ruled out without stronger OS-level enforcement.
 
