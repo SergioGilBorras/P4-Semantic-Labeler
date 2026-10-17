@@ -139,6 +139,7 @@ CI tests Python 3.11, 3.12 and 3.13 on Windows and Ubuntu **without paid/live in
 | [`docs/`](docs/README.md) | Maintained API, architecture, installation and evaluation documentation |
 | [`examples/`](examples/README.md) | Mock-safe example Python, JSON and JSONL inputs |
 | [`tests/`](tests/README.md) | Offline unit, contract and documentation tests |
+| [`scripts/`](scripts/README.md) | Verified Windows PowerShell distribution build and cleanup |
 | [`evaluacion/`](evaluacion/README.md) | Independent evaluation laboratory, source cases and retention policy |
 | [`.github/`](.github/README.md) | CI and project automation |
 
