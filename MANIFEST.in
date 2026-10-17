@@ -1,0 +1,14 @@
+# Source distribution: include customer-facing documentation and example inputs.
+include README.md AUTHORS.md CONTRIBUTING.md SECURITY.md ROADMAP.md LICENSE
+recursive-include docs *.md *.json
+recursive-include examples *.md *.py *.json *.jsonl
+include src/README.md
+include tests/README.md
+include .github/README.md
+recursive-include src/p4_semantic_labeler/prompts *.txt
+prune build
+prune dist
+prune .package-venv
+prune .package-sdist-venv
+prune evaluacion/salida
+prune evaluacion/tmp
