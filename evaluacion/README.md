@@ -94,7 +94,7 @@ batch automatically.
 
 A prompt instruction and passing offline unit tests **do not establish an
 improvement in semantic quality**. An independent evaluator must score
-fidelity, completeness, critical failures, and truncation rate against the
+fidelity, coverage, critical failures, and truncation rate against the
 unchanged per-case rubric. Retain all baseline and experiment run directories
 until after comparison; do not run cleanup with `-Apply` on that evidence.
 
