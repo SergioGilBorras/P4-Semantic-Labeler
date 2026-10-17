@@ -11,7 +11,7 @@ P4-Semantic-Labeler is a provider-neutral labeling library exposing Python, CLI,
 
 ## Quality and automation
 
-- Keep static OpenAPI documentation automatically checked against runtime schema.
+- Extend automated OpenAPI checks to the full generated schema whenever API dependencies are upgraded.
 - Validate current provider compatibility using offline contract tests in CI.
 - Strengthen independent, blinded semantic-fidelity evaluation with frozen rubrics and explicit acceptance decisions.
 - Maintain documentation, packaging smoke tests and the supported-version matrix.
