@@ -64,7 +64,7 @@ Per-item failures do not automatically change the whole-batch HTTP 200 response 
 
 ## POST /v1/labels/file
 
-Multipart text fields: `name` (required), `kind` (default `document`), `output_type` (default `summary`), `min_chars` (default `1`, advisory), `max_chars` (default `160`), `style` (`neutral`), `language` (`es`), `purpose`, `before`, `after`, plus a required binary part `file` with an allowed text extension. Extension and UTF-8 are validated, binary/NUL content is rejected. File contents are supplied as `source_code` for `.py` or `text` for other allowed file extensions. The upload is never executed, saved or used as a path.
+Multipart text fields: `name` (required), `kind` (default `document`), `output_type` (default `summary`), `min_chars` (default `1`, advisory), `max_chars` (default `160`), `style` (`neutral`), `language` (`es`), `purpose`, `before`, `after`, plus a required binary part `file` with an allowed text extension. Extension and UTF-8 are validated, binary/NUL content is rejected. File contents are supplied as `source_code` for `.py` or `text` for other allowed file extensions. The application never executes the upload, persists it as a named project file, or treats its client-supplied filename as a local path. FastAPI's multipart upload handling may temporarily spool larger payloads to disk; deployments must secure and manage their temporary storage.
 
 ```bash
 curl -F name=ProjectArchitecture -F output_type=summary -F max_chars=160 \
