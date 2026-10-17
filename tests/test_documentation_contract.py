@@ -71,7 +71,7 @@ def test_local_markdown_links_are_valid_and_fences_closed():
 
 
 def test_primary_directories_have_readme():
-    for directory in (".github", "docs", "evaluacion", "examples", "src", "tests"):
+    for directory in (".github", "docs", "evaluacion", "examples", "scripts", "src", "tests"):
         readme = ROOT / directory / "README.md"
         assert readme.is_file(), f"Missing primary folder guide: {readme}"
 
@@ -93,5 +93,6 @@ def test_source_distribution_manifest_includes_guides_and_prompt_resources():
     manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8")
     assert "recursive-include docs *.md *.json" in manifest
     assert "recursive-include examples *.md *.py *.json *.jsonl" in manifest
+    assert "recursive-include scripts *.md *.ps1" in manifest
     assert "recursive-include src/p4_semantic_labeler/prompts *.txt" in manifest
     assert "AUTHORS.md" in manifest and "LICENSE" in manifest
