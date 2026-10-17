@@ -68,3 +68,30 @@ def test_local_markdown_links_are_valid_and_fences_closed():
             fences.append(str(doc.relative_to(ROOT)))
     assert not broken, "Broken local links: " + ", ".join(broken)
     assert not fences, "Unclosed code fences: " + ", ".join(fences)
+
+
+def test_primary_directories_have_readme():
+    for directory in (".github", "docs", "evaluacion", "examples", "src", "tests"):
+        readme = ROOT / directory / "README.md"
+        assert readme.is_file(), f"Missing primary folder guide: {readme}"
+
+
+def test_example_requests_follow_current_model_contract():
+    from p4_semantic_labeler.core.models import LabelRequest
+
+    single = json.loads((ROOT / "examples" / "request.json").read_text(encoding="utf-8"))
+    request = LabelRequest.model_validate(single)
+    assert request.subject.name == "process_pending_orders"
+    lines = (ROOT / "examples" / "batch.jsonl").read_text(encoding="utf-8").splitlines()
+    assert lines
+    for line in lines:
+        if line.strip():
+            LabelRequest.model_validate_json(line)
+
+
+def test_source_distribution_manifest_includes_guides_and_prompt_resources():
+    manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8")
+    assert "recursive-include docs *.md *.json" in manifest
+    assert "recursive-include examples *.md *.py *.json *.jsonl" in manifest
+    assert "recursive-include src/p4_semantic_labeler/prompts *.txt" in manifest
+    assert "AUTHORS.md" in manifest and "LICENSE" in manifest
